@@ -6,7 +6,9 @@ import jwt from 'jsonwebtoken'
 
 // Set up email
 const transport = nodeMailer.createTransport({
-  service: process.env.EMAIL_SERVICE,
+  host: "smtp.zoho.in",
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
@@ -21,7 +23,7 @@ const emailTemplate = ({ username, link }) => `
 `
 
 // Generate token
-const makeToken = (email) => {
+export const makeToken = (email) => {
   const expirationDate = new Date();
   expirationDate.setHours(new Date().getHours() + 24);
   return jwt.sign({ email, expirationDate }, process.env.JWT_SECRET_KEY);
@@ -37,10 +39,10 @@ export const login = (req, res) => {
   }
   const token = makeToken(email);
   const mailOptions = {
-    from: "You Know",
+    from: '"Lazyweb" <admin@lazyweb.rocks>',
     html: emailTemplate({
       email,
-      link: `http://localhost:8080/account?token=${token}`,
+      link: `http://localhost:4000/api/auth/account?token=${token}`,
     }),
     subject: "Your Magic Link",
     to: email,
@@ -52,7 +54,7 @@ export const login = (req, res) => {
       res.send("Can't send email.");
     } else {
       res.status(200);
-      res.send(`Magic link sent. : http://localhost:8080/account?token=${token}`);
+      res.send(`Magic link sent. : http://localhost:4000/api/auth/account?token=${token}`);
     }
   });
 }

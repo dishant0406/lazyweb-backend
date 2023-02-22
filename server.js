@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from 'dotenv';
 import login from './routes/auth/login.js';
 import { connectDB } from './utils/db.js';
+import { isAuthenticated } from './middleware/auth/protected.js'
 dotenv.config();
 const app = express();
 
@@ -17,6 +18,11 @@ app.use(express.urlencoded({ extended: false }));
 
 
 app.use('/api/auth', login);
+
+app.get('/hello', isAuthenticated, (req, res) => {
+  console.log(req.user)
+  res.send('Hello World')
+})
 
 
 
