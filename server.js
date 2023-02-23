@@ -2,6 +2,7 @@ import express from 'express';
 import cors from "cors";
 import dotenv from 'dotenv';
 import login from './routes/auth/login.js';
+import githubLogin from './routes/auth/githubauth.js';
 import { connectDB } from './utils/db.js';
 import { isAuthenticated } from './middleware/auth/protected.js'
 dotenv.config();
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 
 
 app.use('/api/auth', login);
+app.use('/oauth', githubLogin);
 
 app.get('/hello', isAuthenticated, (req, res) => {
   console.log(req.user)

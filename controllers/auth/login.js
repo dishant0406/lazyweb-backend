@@ -25,7 +25,7 @@ const emailTemplate = ({ username, link }) => `
 // Generate token
 export const makeToken = (email) => {
   const expirationDate = new Date();
-  expirationDate.setHours(new Date().getHours() + 24);
+  expirationDate.setHours(new Date().getHours() + (24 * 5));
   return jwt.sign({ email, expirationDate }, process.env.JWT_SECRET_KEY);
 };
 
@@ -42,7 +42,7 @@ export const login = (req, res) => {
     from: '"Lazyweb" <admin@lazyweb.rocks>',
     html: emailTemplate({
       email,
-      link: `http://localhost:4000/api/auth/account?token=${token}`,
+      link: `${process.env.BACKEND_URL}/api/auth/account?token=${token}`,
     }),
     subject: "Your Magic Link",
     to: email,
@@ -54,7 +54,7 @@ export const login = (req, res) => {
       res.send("Can't send email.");
     } else {
       res.status(200);
-      res.send(`Magic link sent. : http://localhost:4000/api/auth/account?token=${token}`);
+      res.send(`Magic link sent. : ${process.env.BACKEND_URL}/api/auth/account?token=${token}`);
     }
   });
 }
