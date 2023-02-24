@@ -11,6 +11,16 @@ export const showAllWebsites = async (req, res) => {
   }
 }
 
+export const showIsAvailableForApproval = async (req, res) => {
+  try {
+    const resources = await Resource.find({ isAvailableForApproval: true });
+    res.json(resources);
+  }
+  catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 export const addWebsite = async (req, res) => {
 
   // Extract the user's email from the request object
