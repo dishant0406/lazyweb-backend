@@ -57,7 +57,7 @@ const isAuthenticatedFunc = (req, res) => {
   console.log(decoded.email)
 
   res.status(200)
-  res.redirect(`https://lazyweb.rocks?token=${token}&email=${decoded.email}&isAdmin=${decoded.isAdmin}`)
+  res.redirect(`https://app.lazyweb.rocks/auth?token=${token}`)
 }
 
 export const isAuthenticated = (req, res) => {
