@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv';
 dotenv.config();
+import { User } from '../../Model/User.js';
 
-const isAuthenticated = (req, res, next) => {
+const isAuthenticated = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(403).json({ error: "Can't verify user." });
@@ -23,6 +24,13 @@ const isAuthenticated = (req, res, next) => {
     }
     // Add decoded user to request object for use in subsequent middleware/routes
     req.user = decoded;
+
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      return res.status(403).json({ error: "No User Found" })
+    }
+
+
     next();
   }
   catch (err) {

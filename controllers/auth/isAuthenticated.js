@@ -41,7 +41,7 @@ const isAuthenticatedFunc = (req, res) => {
     if (!user) {
       const newUser = new User({
         email: decoded.email,
-        isAdmin: false
+        isAdmin: decoded.isAdmin
       })
       newUser.save((err, user) => {
         if (err) {
@@ -57,7 +57,7 @@ const isAuthenticatedFunc = (req, res) => {
   console.log(decoded.email)
 
   res.status(200)
-  res.redirect(`https://lazyweb.rocks?token=${token}&email=${decoded.email}`)
+  res.redirect(`https://lazyweb.rocks?token=${token}&email=${decoded.email}&isAdmin=${decoded.isAdmin}`)
 }
 
 export const isAuthenticated = (req, res) => {

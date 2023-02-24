@@ -1,7 +1,7 @@
 import { isAuthenticated } from './auth/isAuthenticated.js'
 import { login } from './auth/login.js'
 import { github, githubOAuth } from './auth/githubauth.js'
-import { showAllWebsites, addWebsite, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags } from './website/websiteSearch.js';
+import { showAllWebsites, addWebsite, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability } from './website/websiteSearch.js';
 
 export {
   isAuthenticated,
@@ -13,5 +13,8 @@ export {
   getUserWebsites,
   updateResource,
   getResourcesByCategories,
-  getResourcesByTags
+  getResourcesByTags,
+  bookmarkResource,
+  getResourcesBookmarkedByUser,
+  setPublicAvailability
 }

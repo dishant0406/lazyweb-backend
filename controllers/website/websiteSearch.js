@@ -11,8 +11,6 @@ export const showAllWebsites = async (req, res) => {
   }
 }
 
-
-// Define an asynchronous function to add a website to the database
 export const addWebsite = async (req, res) => {
 
   // Extract the user's email from the request object
@@ -75,7 +73,6 @@ export const addWebsite = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 }
-
 
 export const getUserWebsites = async (req, res) => {
   const { email } = req.user;
@@ -156,7 +153,6 @@ export const getResourcesByCategories = async (req, res) => {
   }
 }
 
-
 export const getResourcesByTags = async (req, res) => {
   let { tags } = req.body;
 
@@ -171,6 +167,78 @@ export const getResourcesByTags = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 }
+
+export const bookmarkResource = async (req, res) => {
+  const { resourceId } = req.params;
+  const { email } = req.user;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const resource = await Resource.findById(resourceId);
+
+    if (!resource) {
+      res.status(404).json({ error: 'Resource not found' });
+      return;
+    }
+
+    const bookmarkIndex = resource.bookmarked_by.indexOf(user._id);
+
+    if (bookmarkIndex === -1) {
+      // Add the user ID to the `bookmarked_by` list
+      resource.bookmarked_by.push(user._id);
+    } else {
+      // Remove the user ID from the `bookmarked_by` list
+      resource.bookmarked_by.splice(bookmarkIndex, 1);
+    }
+
+    await resource.save();
+
+    res.status(200).json(resource);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+export const getResourcesBookmarkedByUser = async (req, res) => {
+  const { email } = req.user
+  console.log(req.user)
+  const user = await User.findOne({ email })
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return
+  }
+  const bookmarkedResources = await Resource.find({ bookmarked_by: { $in: [user._id] } })
+  res.status(200).json(bookmarkedResources)
+}
+
+export const setPublicAvailability = async (req, res) => {
+  const { resourceId } = req.params;
+  const { isAdmin } = req.user;
+
+  if (!isAdmin) {
+    res.status(403).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const resource = await Resource.findByIdAndUpdate(
+      { _id: resourceId },
+      { isPublicAvailable: true },
+      { new: true }
+    );
+    res.status(200).json(resource);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+
 
 
 

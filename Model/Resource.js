@@ -49,6 +49,10 @@ const schema = new mongoose.Schema({
   created_by_list: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  }],
+  bookmarked_by: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }]
 });
 

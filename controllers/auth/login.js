@@ -3,6 +3,7 @@ import nodeMailer from "nodemailer";
 import dotenv from 'dotenv';
 dotenv.config();
 import jwt from 'jsonwebtoken'
+import { User } from "../../Model/User.js";
 
 // Set up email
 const transport = nodeMailer.createTransport({
@@ -23,13 +24,13 @@ const emailTemplate = ({ username, link }) => `
 `
 
 // Generate token
-export const makeToken = (email) => {
+export const makeToken = (email, isAdmin = false) => {
   const expirationDate = new Date();
   expirationDate.setHours(new Date().getHours() + (24 * 5));
-  return jwt.sign({ email, expirationDate }, process.env.JWT_SECRET_KEY);
+  return jwt.sign({ email, expirationDate, isAdmin }, process.env.JWT_SECRET_KEY);
 };
 
-export const login = (req, res) => {
+export const login = async (req, res) => {
   const { email } = req.body;
   if (!email) {
     res.status(404);
@@ -37,7 +38,15 @@ export const login = (req, res) => {
       message: "You didn't enter a valid email address.",
     });
   }
-  const token = makeToken(email);
+  let token;
+  //findOne using User model by email if there is nothing then add the User
+  const user = await User.findOne({ email })
+  if (!user) {
+    token = makeToken(email);
+  } else {
+    token = makeToken(email, user.isAdmin);
+  }
+
   const mailOptions = {
     from: '"Lazyweb" <admin@lazyweb.rocks>',
     html: emailTemplate({
