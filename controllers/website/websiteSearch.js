@@ -6,8 +6,11 @@ export const showAllWebsites = async (req, res) => {
     const resources = await Resource.find({ isPublicAvailable: true });
     const allTags = [...new Set(resources.reduce((tags, resource) => tags.concat(resource.tags.map(tag => tag.toLowerCase())), []))];
     const allCategories = [...new Set(resources.reduce((categories, resource) => categories.concat(resource.category.toLowerCase()), []))];
+    const today = new Date();
+    const index = today.getTime() % resources.length;
+    const dailyResource = resources.find((_, i) => i === index);
 
-    res.json({ resources, allTags, allCategories });
+    res.json({ resources, allTags, allCategories, dailyResource });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

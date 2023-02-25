@@ -90,7 +90,7 @@ app.post('/ss', apicache('60 minutes'), async (req, res) => {
   }
 });
 
-
-app.listen({ port: 3000 }, () =>
-  console.log(`🚀 Server ready at http://localhost:3000`)
+let port = process.env.PORT || 3000
+app.listen({ port }, () =>
+  console.log(`🚀 Server ready at http://localhost:${port}`)
 );
