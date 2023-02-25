@@ -21,8 +21,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 app.use(express.static('screenshots'));
 const screenshotPath = path.join(__dirname, 'screenshots');
 
+const allowedOrigins = ['http://localhost:3000', 'https://lazyweb.rocks', 'https://app.lazyweb.rocks'];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  }
+};
+
 // Set up middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
