@@ -34,7 +34,7 @@ const screenshotPath = path.join(__dirname, 'screenshots');
 // };
 
 // Set up middleware
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
