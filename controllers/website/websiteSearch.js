@@ -4,12 +4,15 @@ import { User } from "../../Model/User.js";
 export const showAllWebsites = async (req, res) => {
   try {
     const resources = await Resource.find({ isPublicAvailable: true });
-    res.json(resources);
-  }
-  catch (err) {
+    const allTags = [...new Set(resources.reduce((tags, resource) => tags.concat(resource.tags.map(tag => tag.toLowerCase())), []))];
+    const allCategories = [...new Set(resources.reduce((categories, resource) => categories.concat(resource.category.toLowerCase()), []))];
+
+    res.json({ resources, allTags, allCategories });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}
+};
+
 
 export const showIsAvailableForApproval = async (req, res) => {
   try {
@@ -243,6 +246,36 @@ export const setPublicAvailability = async (req, res) => {
       { new: true }
     );
     res.status(200).json(resource);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+export const getAllTags = async (req, res) => {
+  try {
+    const resources = await Resource.find({ isPublicAvailable: true });
+    const allTags = resources.reduce((tags, resource) => {
+      //convert into lowercase first
+      const lowercaseTags = resource.tags?.map((tag) => tag.toLowerCase());
+      return tags.concat(lowercaseTags);
+    }, []);
+    const uniqueTags = [...new Set(allTags)];
+    res.status(200).json(uniqueTags);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+export const getAllCategories = async (req, res) => {
+  try {
+    const resources = await Resource.find({ isPublicAvailable: true });
+    const allCategories = resources.reduce((categories, resource) => {
+      //lowercase first
+      const lowercaseCategory = resource.category?.toLowerCase();
+      return categories.concat(lowercaseCategory);
+    }, []);
+    const uniqueCategories = [...new Set(allCategories)];
+    res.status(200).json(uniqueCategories);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
