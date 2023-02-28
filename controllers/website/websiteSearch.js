@@ -285,6 +285,40 @@ export const getAllCategories = async (req, res) => {
   }
 };
 
+export const likeAResource = async (req, res) => {
+  const { email } = req.user
+  console.log(req.user)
+  const user = await User.findOne({ email })
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return
+  }
+  const { resourceId } = req.params;
+  try {
+    //check if user already liked the resouce
+    const resource = await Resource.findById(resourceId)
+    if (!resource) {
+      res.status(404).json({ error: "Resource not found" });
+      return
+    }
+    const likeIndex = resource.liked_by.indexOf(user._id)
+    if (likeIndex === -1) {
+      resource.liked_by.push(user._id)
+      //increase resouce likes count by 1
+      resource.likes += 1
+    }
+    else {
+      resource.liked_by.splice(likeIndex, 1)
+      //descrease like count
+      resource.likes -= 1
+    }
+    await resource.save()
+    res.status(200).json(resource)
+  }
+  catch (err) {
+    res.status(500).json({ err: "Error in Liking the resource" })
+  }
+}
 
 
 

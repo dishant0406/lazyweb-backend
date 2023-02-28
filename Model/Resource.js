@@ -53,6 +53,10 @@ const schema = new mongoose.Schema({
   bookmarked_by: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  }],
+  liked_by: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }]
 });
 

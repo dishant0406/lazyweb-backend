@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { showAllWebsites, addWebsite, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags } from '../../controllers/index.js';
+import { showAllWebsites, addWebsite, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource } from '../../controllers/index.js';
 import { isAuthenticated } from '../../middleware/auth/protected.js';
 const router = Router();
 
@@ -26,5 +26,7 @@ router.post('/add', isAuthenticated, addWebsite)
 router.get('/all-tags', getAllTags)
 
 router.get('/all-categories', getAllCategories)
+
+router.put('/like/:resourceId', isAuthenticated, likeAResource)
 
 export default router;
