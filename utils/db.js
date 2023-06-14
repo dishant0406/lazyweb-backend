@@ -3,6 +3,10 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 dotenv.config();
 
+/**
+ * This function connects to a MongoDB database using the provided URI and logs a message indicating
+ * successful connection.
+ */
 export const connectDB = async () => {
   try {
     mongoose.set('strictQuery', false);

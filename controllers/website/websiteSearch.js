@@ -1,6 +1,16 @@
 import { Resource } from "../../Model/Resource.js"
 import { User } from "../../Model/User.js";
 
+/**
+ * This function retrieves all public available resources, their tags and categories, and a daily
+ * resource based on the current date.
+ * @param req - The `req` parameter is the request object representing the HTTP request made to the
+ * server. It contains information about the request such as the HTTP method, headers, and any data
+ * sent in the request body.
+ * @param res - The `res` parameter is the response object that will be sent back to the client with
+ * the requested data or error message. It is an instance of the `http.ServerResponse` class in Node.js
+ * and contains methods for sending the response back to the client, such as `res.json()` and `
+ */
 export const showAllWebsites = async (req, res) => {
   try {
     const resources = await Resource.find({ isPublicAvailable: true });
@@ -18,6 +28,16 @@ export const showAllWebsites = async (req, res) => {
 };
 
 
+/**
+ * This function retrieves all resources that are available for approval.
+ * @param req - req stands for "request" and it is an object that contains information about the HTTP
+ * request that was made to the server. It includes information such as the request method, headers,
+ * URL, and any data that was sent in the request body. In this case, the function is using the request
+ * object
+ * @param res - `res` is the response object that is used to send the response back to the client
+ * making the request. It is an instance of the Express `Response` object and has methods like `json()`
+ * to send JSON responses, `send()` to send plain text responses, and `status()` to set
+ */
 export const showIsAvailableForApproval = async (req, res) => {
   try {
     const resources = await Resource.find({ isAvailableForApproval: true });
@@ -28,6 +48,17 @@ export const showIsAvailableForApproval = async (req, res) => {
   }
 }
 
+/**
+ * This function adds a new website resource to the database, with information such as URL, image URL,
+ * title, description, and tags, and associates it with the user who added it.
+ * @param req - req is the request object that contains information about the incoming HTTP request,
+ * such as the request headers, request parameters, request body, and user authentication details.
+ * @param res - `res` is the response object that will be sent back to the client with the result of
+ * the API request. It is used to send HTTP responses with status codes and data.
+ * @returns The function does not explicitly return anything, but it sends a response to the client
+ * using the `res` object. The response can be either a success response with the new resource data
+ * (status code 201) or an error response with an error message (status code 400 or 404).
+ */
 export const addWebsite = async (req, res) => {
 
   // Extract the user's email from the request object
@@ -91,6 +122,17 @@ export const addWebsite = async (req, res) => {
   }
 }
 
+/**
+ * This function retrieves a list of websites created by a user based on their email.
+ * @param req - req stands for request and it is an object that contains information about the HTTP
+ * request that was made, such as the request method, headers, URL, and any data that was sent with the
+ * request. It is passed as a parameter to the function.
+ * @param res - `res` is the response object that is used to send a response back to the client making
+ * the request. It contains methods such as `status` to set the HTTP status code of the response, and
+ * `json` to send a JSON response body.
+ * @returns This code defines an asynchronous function called `getUserWebsites` that takes in a request
+ * object (`req`) and a response object (`res`).
+ */
 export const getUserWebsites = async (req, res) => {
   const { email } = req.user;
 
@@ -120,6 +162,18 @@ export const getUserWebsites = async (req, res) => {
   }
 }
 
+/**
+ * This function updates a resource's category and tags, and sets a flag if both are updated, returning
+ * the updated resource or an error message.
+ * @param req - The `req` parameter is an object that represents the HTTP request made to the server.
+ * It contains information such as the request method, headers, URL, and any data sent in the request
+ * body.
+ * @param res - The `res` parameter is the response object that will be sent back to the client with
+ * the updated resource or an error message. It contains methods to set the HTTP status code and send
+ * the response data.
+ * @returns This function returns a JSON response with the updated resource object if the update is
+ * successful, or a JSON response with an error message if there is an error.
+ */
 export const updateResource = async (req, res) => {
   const { resourceId } = req.params;
   const { category, tags } = req.body;
@@ -155,6 +209,14 @@ export const updateResource = async (req, res) => {
   }
 }
 
+/**
+ * This function retrieves resources based on categories provided in the request body.
+ * @param req - req stands for request and it is an object that contains information about the incoming
+ * HTTP request such as the request headers, request parameters, request body, etc.
+ * @param res - `res` is the response object that is used to send the response back to the client. It
+ * is an instance of the Express `Response` object and has methods like `status()` and `json()` that
+ * are used to set the HTTP status code and send the response data in JSON format, respectively
+ */
 export const getResourcesByCategories = async (req, res) => {
   let { categories } = req.body;
 
@@ -170,6 +232,14 @@ export const getResourcesByCategories = async (req, res) => {
   }
 }
 
+/**
+ * This function retrieves resources based on tags provided in the request body.
+ * @param req - req stands for request and it is an object that contains information about the incoming
+ * HTTP request such as the request headers, request parameters, request body, etc.
+ * @param res - The `res` parameter is the response object that is used to send the HTTP response back
+ * to the client. It contains methods like `status()` to set the HTTP status code, `json()` to send a
+ * JSON response, and many others.
+ */
 export const getResourcesByTags = async (req, res) => {
   let { tags } = req.body;
 
@@ -185,6 +255,18 @@ export const getResourcesByTags = async (req, res) => {
   }
 }
 
+/**
+ * This function allows a user to bookmark or unbookmark a resource and updates the resource's
+ * bookmarked_by list accordingly.
+ * @param req - req stands for "request" and it contains information about the incoming HTTP request,
+ * such as the request parameters, headers, and body.
+ * @param res - `res` is the response object that is used to send the HTTP response back to the client.
+ * It contains methods like `status()` to set the HTTP status code, `json()` to send a JSON response,
+ * and `send()` to send a plain text response.
+ * @returns a JSON response with the updated resource object, including the `bookmarked_by` list that
+ * may have been modified by adding or removing the user ID. If there is an error, the function returns
+ * a JSON response with an error message.
+ */
 export const bookmarkResource = async (req, res) => {
   const { resourceId } = req.params;
   const { email } = req.user;
@@ -222,6 +304,18 @@ export const bookmarkResource = async (req, res) => {
   }
 }
 
+/**
+ * This function retrieves all resources bookmarked by a user based on their email.
+ * @param req - req stands for request and it is an object that contains information about the HTTP
+ * request that was made, such as the request headers, query parameters, and request body. It is passed
+ * as a parameter to the function.
+ * @param res - `res` is the response object that is used to send a response back to the client making
+ * the request. It is an instance of the Express `Response` object and contains methods like `status()`
+ * and `json()` that are used to set the HTTP status code and send a JSON response, respectively
+ * @returns This code returns a list of resources that have been bookmarked by a user with the email
+ * specified in the request. If the user is not found, it returns a 404 error. The list of bookmarked
+ * resources is returned as a JSON object with a 200 status code.
+ */
 export const getResourcesBookmarkedByUser = async (req, res) => {
   const { email } = req.user
   console.log(req.user)
@@ -234,6 +328,18 @@ export const getResourcesBookmarkedByUser = async (req, res) => {
   res.status(200).json(bookmarkedResources)
 }
 
+/**
+ * This function sets the public availability of a resource to true if the user making the request is
+ * an admin.
+ * @param req - req stands for request and it is an object that contains information about the HTTP
+ * request that was made, such as the request parameters, headers, and body. It is passed as a
+ * parameter to the setPublicAvailability function.
+ * @param res - `res` is the response object that is used to send the response back to the client
+ * making the request. It contains methods like `status()` to set the HTTP status code of the response,
+ * `json()` to send a JSON response, and many others.
+ * @returns This function returns a JSON response with the updated resource object if the update is
+ * successful, or a JSON response with an error message if the update fails.
+ */
 export const setPublicAvailability = async (req, res) => {
   const { resourceId } = req.params;
   const { isAdmin } = req.user;
@@ -255,6 +361,14 @@ export const setPublicAvailability = async (req, res) => {
   }
 };
 
+/**
+ * This function retrieves all unique tags from public resources and returns them as an array.
+ * @param req - req stands for request and it is an object that contains information about the HTTP
+ * request that was made, such as the request headers, query parameters, and request body.
+ * @param res - `res` is the response object that is used to send the response back to the client. It
+ * is an instance of the Express `Response` object and has methods like `status`, `json`, `send`, etc.
+ * that are used to set the response status code, headers, and body.
+ */
 export const getAllTags = async (req, res) => {
   try {
     const resources = await Resource.find({ isPublicAvailable: true });
@@ -270,6 +384,16 @@ export const getAllTags = async (req, res) => {
   }
 };
 
+/**
+ * This function retrieves all unique categories from public resources.
+ * @param req - req stands for "request" and it is an object that represents the HTTP request made by
+ * the client to the server. It contains information about the request such as the URL, headers, query
+ * parameters, and body. In this specific function, the req parameter is not used, but it is included
+ * as
+ * @param res - `res` is the response object that is used to send the response back to the client. It
+ * is an instance of the `Response` class from the Express.js framework. The `res` object has methods
+ * like `status()` to set the HTTP status code of the response, `json()` to
+ */
 export const getAllCategories = async (req, res) => {
   try {
     const resources = await Resource.find({ isPublicAvailable: true });
@@ -285,6 +409,19 @@ export const getAllCategories = async (req, res) => {
   }
 };
 
+/**
+ * This function allows a user to like or unlike a resource and updates the resource's like count
+ * accordingly.
+ * @param req - req stands for request and it is an object that contains information about the HTTP
+ * request that was made, such as the request headers, request parameters, request body, etc. It is
+ * passed as a parameter to the likeAResource function.
+ * @param res - `res` is the response object that is used to send the response back to the client
+ * making the request. It contains methods like `status` and `json` that are used to set the HTTP
+ * status code and send the response data in JSON format, respectively.
+ * @returns a JSON response with the updated resource object if the resource is found and the
+ * like/unlike operation is successful. If the user or resource is not found, or there is an error in
+ * the operation, the function returns an error JSON response with an appropriate message.
+ */
 export const likeAResource = async (req, res) => {
   const { email } = req.user
   console.log(req.user)

@@ -43,7 +43,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use('/api/auth', loginRoute);
 app.use('/oauth', githubRoute);
 
-// Websites Routes
+
 app.use('/api/websites', websitesRoute);
 
 app.post('/ipinfo', async (req, res) => {
@@ -66,6 +66,13 @@ app.post('/metadata', async (req, res) => {
   }
 })
 
+/* This code block sets up a POST endpoint at the `/ss` route. When a request is made to this endpoint,
+it takes the URL provided in the request body and uses it to capture a screenshot of the website
+using the `capture-website` library. The captured screenshot is saved as a `.webp` file in the
+`screenshots` directory. If a screenshot for the same URL already exists, it sends the existing
+screenshot URL as a response. If not, it captures a new screenshot and sends the newly created
+screenshot URL as a response. The `apicache` middleware is used to cache the response for 60
+minutes. If there is an error, it sends a 404 status code and an error message as a response. */
 app.post('/ss', apicache('60 minutes'), async (req, res) => {
   try {
     const url = req.body.url

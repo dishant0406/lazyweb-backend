@@ -2,7 +2,19 @@ import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv';
 dotenv.config();
 
-//controller to return decoded token object from req.body
+
+/**
+ * This function decodes a JWT token and checks if it is valid, returning an error message if it is
+ * not.
+ * @param req - req stands for "request" and it is an object that represents the HTTP request made by
+ * the client to the server. It contains information about the request such as the URL, headers,
+ * parameters, and body.
+ * @param res - `res` is the response object that is used to send the response back to the client
+ * making the request. It is an instance of the `http.ServerResponse` class in Node.js. The `res`
+ * object has methods like `status()` and `send()` that are used to set the HTTP
+ * @returns This function returns the decoded token if it is valid and has not expired. If the token is
+ * missing, invalid, or expired, it returns an error message with an appropriate status code.
+ */
 export const decodedToken = (req, res) => {
   const { token } = req.body
   if (!token) {
