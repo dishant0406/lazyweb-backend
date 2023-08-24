@@ -11,9 +11,9 @@ router.get('/bookmarked', isAuthenticated, getResourcesBookmarkedByUser)
 
 router.get('/is-available-for-approval', isAuthenticated, showIsAvailableForApproval)
 
-router.get('/by-categories', getResourcesByCategories)
+router.post('/by-categories', getResourcesByCategories)
 
-router.get('/by-tags', getResourcesByTags)
+router.post('/by-tags', getResourcesByTags)
 
 router.put('/update/:resourceId', isAuthenticated, updateResource)
 

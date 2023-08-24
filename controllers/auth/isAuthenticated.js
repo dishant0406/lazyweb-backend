@@ -74,3 +74,19 @@ const isAuthenticatedFunc = (req, res) => {
 export const isAuthenticated = (req, res) => {
   isAuthenticatedFunc(req, res)
 }
+
+export const getUserDetails = async (req, res) => {
+  const { email } = req.user
+  const user = await User.findOne({ email: email })
+
+  if (!user) {
+    res.status(404)
+    res.send("User not found.")
+    return
+  }
+
+  res.status(200)
+  res.send(user)
+
+
+}

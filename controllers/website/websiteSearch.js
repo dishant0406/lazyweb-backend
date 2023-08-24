@@ -14,14 +14,17 @@ import { User } from "../../Model/User.js";
 export const showAllWebsites = async (req, res) => {
   try {
     const resources = await Resource.find({ isPublicAvailable: true });
-    const allTags = [...new Set(resources.reduce((tags, resource) => tags.concat(resource.tags.map(tag => tag.toLowerCase())), []))];
-    const allCategories = [...new Set(resources.reduce((categories, resource) => categories.concat(resource.category.toLowerCase()), []))];
+    const allResources = await Resource.find();
+    const tags = [...new Set(resources.reduce((tags, resource) => tags.concat(resource.tags.map(tag => tag.toLowerCase())), []))];
+    const allTags = [...new Set(allResources.reduce((tags, resource) => tags.concat(resource.tags?.map(tag => tag?.toLowerCase())), []))].filter(tag => tag !== undefined);
+    const categories = [...new Set(resources.reduce((categories, resource) => categories.concat(resource.category.toLowerCase()), []))];
+    const allCategories = [...new Set(allResources.reduce((categories, resource) => categories.concat(resource.category?.toLowerCase()), []))].filter(category => category !== undefined);
     const today = new Date();
     const daysSinceEpoch = Math.floor(today.getTime() / (1000 * 60 * 60 * 24));
     const index = daysSinceEpoch % resources.length;
     const dailyResource = resources.find((_, i) => i === index);
 
-    res.json({ resources, allTags, allCategories, dailyResource });
+    res.json({ resources, allTags, allCategories, dailyResource, tags, categories });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -41,7 +44,7 @@ export const showAllWebsites = async (req, res) => {
 export const showIsAvailableForApproval = async (req, res) => {
   try {
     const resources = await Resource.find({ isAvailableForApproval: true });
-    res.json(resources);
+    res.json({ resources });
   }
   catch (err) {
     res.status(500).json({ error: err.message });
@@ -155,7 +158,7 @@ export const getUserWebsites = async (req, res) => {
     });
 
     // Send a response with the list of user's websites
-    res.status(200).json(userWebsites);
+    res.status(200).json({ userWebsites });
   } catch (err) {
     // If there is an error retrieving the user's websites, send an error response with the error message
     res.status(500).json({ error: err.message });
@@ -226,7 +229,7 @@ export const getResourcesByCategories = async (req, res) => {
 
   try {
     const resources = await Resource.find({ category: { $in: categories } });
-    res.status(200).json(resources);
+    res.status(200).json({ resources });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -249,7 +252,7 @@ export const getResourcesByTags = async (req, res) => {
 
   try {
     const resources = await Resource.find({ tags: { $in: tags } });
-    res.status(200).json(resources);
+    res.status(200).json({ resources });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -325,7 +328,7 @@ export const getResourcesBookmarkedByUser = async (req, res) => {
     return
   }
   const bookmarkedResources = await Resource.find({ bookmarked_by: { $in: [user._id] } })
-  res.status(200).json(bookmarkedResources)
+  res.status(200).json({ bookmarkedResources })
 }
 
 /**
@@ -457,6 +460,40 @@ export const likeAResource = async (req, res) => {
   }
 }
 
+export const checkIfResourceBookmarked = async (req, res) => {
+
+  const { email } = req.user
+
+  const user = await User.find({ email })
+
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return
+  }
+
+  const { resourceId } = req.params;
+
+  try {
+    const resource = await Resource.findById(resourceId)
+
+    if (!resource) {
+      res.status(404).json({ error: "Resource not found" });
+      return
+    }
+
+    const bookmarkIndex = resource.bookmarked_by.indexOf(user._id)
+
+    if (bookmarkIndex === -1) {
+      res.status(200).json({ bookmarked: false })
+    }
+    else {
+      res.status(200).json({ bookmarked: true })
+    }
+  }
+  catch (err) {
+    res.status(500).json({ err: "Error in checking if resource is bookmarked" })
+  }
+}
 
 
 

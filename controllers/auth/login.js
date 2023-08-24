@@ -42,10 +42,10 @@ const emailTemplate = ({ username, link }) => `
  * `expirationDate` is set to 5 days from the current date and time. The JWT is signed using the
  * `process.env.JWT_SECRET_KEY` as the secret key.
  */
-export const makeToken = (email, isAdmin = false) => {
+export const makeToken = (email, isAdmin = false, id) => {
   const expirationDate = new Date();
   expirationDate.setHours(new Date().getHours() + (24 * 5));
-  return jwt.sign({ email, expirationDate, isAdmin }, process.env.JWT_SECRET_KEY);
+  return jwt.sign({ email, expirationDate, isAdmin, id }, process.env.JWT_SECRET_KEY);
 };
 
 /**
@@ -74,16 +74,21 @@ export const login = async (req, res) => {
   //findOne using User model by email if there is nothing then add the User
   const user = await User.findOne({ email })
   if (!user) {
-    token = makeToken(email);
+    const newUser = new User({
+      email: email,
+      isAdmin: false,
+    })
+    await newUser.save()
+    token = makeToken(email, false, user._id);
   } else {
-    token = makeToken(email, user.isAdmin);
+    token = makeToken(email, user.isAdmin, user._id);
   }
 
   const mailOptions = {
     from: '"Lazyweb" <admin@lazyweb.rocks>',
     html: emailTemplate({
       username: email,
-      link: `${process.env.BACKEND_URL}/api/auth/account?token=${token}`,
+      link: `${process.env.BACKEND_URL}/?token=${token}`,
     }),
     subject: "Your Magic Link",
     to: email,

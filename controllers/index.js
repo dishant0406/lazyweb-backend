@@ -1,4 +1,4 @@
-import { isAuthenticated } from './auth/isAuthenticated.js'
+import { isAuthenticated, getUserDetails } from './auth/isAuthenticated.js'
 import { login } from './auth/login.js'
 import { github, githubOAuth } from './auth/githubauth.js'
 import { showAllWebsites, addWebsite, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource } from './website/websiteSearch.js';
@@ -22,5 +22,6 @@ export {
   decodedToken,
   getAllCategories,
   getAllTags,
-  likeAResource
+  likeAResource,
+  getUserDetails
 }
