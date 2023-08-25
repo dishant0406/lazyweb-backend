@@ -355,7 +355,40 @@ export const setPublicAvailability = async (req, res) => {
   try {
     const resource = await Resource.findByIdAndUpdate(
       { _id: resourceId },
-      { isPublicAvailable: true },
+      { isPublicAvailable: true, isAvailableForApproval: false },
+      { new: true }
+    );
+    res.status(200).json(resource);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+/**
+ * The function `rejectResource` updates the `isAvailableForApproval` field of a resource to `false` if
+ * the user making the request is an admin.
+ * @param req - The `req` parameter is an object that represents the HTTP request made to the server.
+ * It contains information such as the request headers, request body, request parameters, and user
+ * authentication details.
+ * @param res - The `res` parameter is the response object that is used to send the response back to
+ * the client. It contains methods and properties that allow you to control the response, such as
+ * setting the status code, sending JSON data, or redirecting the client to another URL.
+ * @returns a JSON response with the updated resource object if the user is an admin and the resource
+ * is successfully updated. If there is an error, it returns a JSON response with the error message.
+ */
+export const rejectResource = async (req, res) => {
+  const { resourceId } = req.params;
+  const { isAdmin } = req.user;
+
+  if (!isAdmin) {
+    res.status(403).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const resource = await Resource.findByIdAndUpdate(
+      { _id: resourceId },
+      { isAvailableForApproval: false },
       { new: true }
     );
     res.status(200).json(resource);
@@ -460,6 +493,17 @@ export const likeAResource = async (req, res) => {
   }
 }
 
+/**
+ * The function checks if a resource is bookmarked by a user.
+ * @param req - The `req` parameter is the request object that contains information about the HTTP
+ * request made by the client. It includes properties such as headers, query parameters, request body,
+ * and user information.
+ * @param res - The `res` parameter is the response object that is used to send the HTTP response back
+ * to the client. It is an instance of the Express `Response` object and has methods like `status()`
+ * and `json()` that are used to set the response status code and send JSON data back to the
+ * @returns a JSON response with the property "bookmarked" indicating whether the resource is
+ * bookmarked or not.
+ */
 export const checkIfResourceBookmarked = async (req, res) => {
 
   const { email } = req.user
@@ -492,6 +536,24 @@ export const checkIfResourceBookmarked = async (req, res) => {
   }
   catch (err) {
     res.status(500).json({ err: "Error in checking if resource is bookmarked" })
+  }
+}
+
+export const setResourceAvailableForApproval = async (req, res) => {
+  const { resourceId } = req.params;
+  const { isAdmin } = req.user;
+  const { category, tags } = req.body;
+
+  try {
+    const resource = await Resource.findByIdAndUpdate(
+      { _id: resourceId },
+      { isAvailableForApproval: true, isPublicAvailable: false, category, tags },
+      { new: true }
+    );
+    res.status(200).json(resource);
+  }
+  catch (err) {
+    res.status(400).json({ error: err.message });
   }
 }
 
