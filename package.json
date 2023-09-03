@@ -43,6 +43,7 @@
     "link-meta-extractor": "^1.3.4",
     "mongoose": "^6.9.2",
     "nodemailer": "^6.9.1",
-    "pg": "^8.9.0"
+    "pg": "^8.9.0",
+    "ws": "^8.13.0"
   }
 }
