@@ -88,7 +88,7 @@ export const login = async (req, res) => {
     from: '"Lazyweb" <admin@lazyweb.rocks>',
     html: emailTemplate({
       username: email,
-      link: `${process.env.BACKEND_URL}/?token=${token}`,
+      link: `${process.env.FRONTEND_URL}/?token=${token}`,
     }),
     subject: "Your Magic Link",
     to: email,
