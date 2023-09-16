@@ -1,5 +1,13 @@
 import { Resource } from "../../Model/Resource.js"
 import { User } from "../../Model/User.js";
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 /**
  * This function retrieves all public available resources, their tags and categories, and a daily
@@ -539,6 +547,16 @@ export const checkIfResourceBookmarked = async (req, res) => {
   }
 }
 
+/**
+ * The function sets a resource as available for approval by updating its properties and returns the
+ * updated resource.
+ * @param req - The `req` parameter is an object that represents the HTTP request made to the server.
+ * It contains information such as the request headers, request body, request parameters, and user
+ * information.
+ * @param res - The `res` parameter is the response object that is used to send the response back to
+ * the client. It contains methods and properties that allow you to control the response, such as
+ * setting the status code and sending JSON data.
+ */
 export const setResourceAvailableForApproval = async (req, res) => {
   const { resourceId } = req.params;
   const { isAdmin } = req.user;
@@ -553,6 +571,166 @@ export const setResourceAvailableForApproval = async (req, res) => {
     res.status(200).json(resource);
   }
   catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+/**
+ * The function `getResourcesThatMatchDescription` takes a description as input and returns a list of
+ * resources that match the description.
+ * @param req - The `req` parameter represents the HTTP request object, which contains information
+ * about the incoming request from the client. It includes properties such as headers, body, query
+ * parameters, and more.
+ * @param res - The `res` parameter is the response object that is used to send the response back to
+ * the client. It is an instance of the Express `Response` object and has methods like `status()` and
+ * `json()` that are used to set the response status code and send JSON data back to the client
+ */
+export const getResourcesThatMatchDescription = async (req, res) => {
+  const { desc } = req.body;
+
+  try {
+    const resources = await Resource.find(
+      { isPublicAvailable: true },
+      'title desc _id'
+    );
+
+    const nameWithDesc = resources.map(resource => ({
+      nameDesc: `${resource.title} ${resource.desc}`,
+      id: resource._id,
+    }));
+
+    // Prepare all the OpenAI API calls
+    const apiCalls = nameWithDesc.map(async resource => {
+      const prompt = `
+      Your task is to critically evaluate whether the resource description is aligned with what the user is looking for. The user has a specific intent or need, which may not be expressed in exactly the same words as the resource description. Therefore, it's important to consider the context, any synonyms or closely related terms, as well as the potential utility of the resource in meeting the user's needs.
+      
+      To clarify:
+      - Synonyms or related terms should be considered. For example, if the user is asking for "web icons," resources that offer "website pictograms" may also be relevant.
+      - Think about the utility or applicability of the resource. Is it likely to serve the purpose the user has in mind?
+      - Context is important. Try to understand the broader intent behind the user's query.
+      
+      User's Intent: ${desc}
+      Resource Description: ${resource.nameDesc}
+      
+      Based on your understanding, does this resource align with what the user is likely looking for or might find useful? Respond with "true" if it aligns well and "false" if it does not. Please remember, your response should only be "true" or "false".
+      `;
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo-16k-0613',
+        messages: [{
+          role: 'user',
+          content: prompt,
+        }],
+        temperature: 0.1
+      });
+
+      const { choices } = completion;
+      const { message } = choices[0];
+      return message.content.toLowerCase() === "true" ? resource.id : null;
+    });
+
+    // Execute all the OpenAI API calls in parallel
+    const matchResults = await Promise.all(apiCalls);
+
+    // Filter out the null values and retrieve the IDs that matched
+    const resultIds = matchResults.filter(id => id !== null);
+
+    // Fetch the final resources in a single query
+    const finalResources = await Resource.find({
+      '_id': { $in: resultIds }
+    });
+
+    res.status(200).json({ resources: finalResources });
+
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+
+
+/**
+ * The `generateUI` function takes a description as input and uses OpenAI's GPT-3.5 Turbo model to
+ * generate HTML code with Tailwind CSS classes for a UI component based on the description.
+ * @param req - The `req` parameter represents the HTTP request object, which contains information
+ * about the incoming request such as headers, query parameters, and the request body.
+ * @param res - The `res` parameter is the response object that is used to send the HTTP response back
+ * to the client. It is an object that contains methods and properties for handling the response, such
+ * as setting the status code, sending JSON data, or sending the generated UI component.
+ * @returns a response to the client. If the description is missing, it returns a 400 status code with
+ * an error message. If the UI generation is successful, it returns a 200 status code with the
+ * generated UI. If there is an error during the process, it returns a 500 status code with an error
+ * message.
+ */
+export const generateUI = async (req, res) => {
+  try {
+    const desc = req.body.desc;
+
+    if (!desc) {
+      return res.status(400).json({ error: 'Description is required' });
+    }
+
+    // const completion = await openai.chat.completions.create({
+    //   model: 'gpt-3.5-turbo',
+    //   messages: [
+    //     {
+    //       role: 'system',
+    //       content: 'You are a code generator specialized in creating raw HTML code with Tailwind CSS classes only. Your output should contain exclusively the HTML code, devoid of any comments, explanations, or inline styles.',
+    //     },
+    //     {
+    //       role: 'user',
+    //       content: `Strictly generate raw HTML code utilizing Tailwind CSS classes for the following UI component description: "${desc}". Exclude any and all comments, explanations, or additional text. Output HTML code only.`,
+    //     },
+    //   ],
+    //   temperature: 0.1,
+    //   //a max_tokens: 200, // Limit the length of the response
+    // });
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a specialized code generator that creates raw HTML code intended for the body of an HTML document. Use only Tailwind CSS classes for styling. Your output should contain exclusively HTML content appropriate for the <body> section, devoid of any comments, explanations, or inline styles.',
+        },
+        {
+          role: 'user',
+          content: `Strictly generate raw HTML code utilizing Tailwind CSS classes. Exclude any and all comments, explanations, or additional text. Output HTML code only. Generate only the raw HTML content appropriate for the <body> section of an HTML document, utilizing Tailwind CSS classes, based on the following UI component description: "${desc}". Exclude any headers, footers, doctype declarations, comments, or any other elements that do not belong inside the <body> tag.`,
+        },
+      ],
+      temperature: 0.1,
+      // max_tokens: 200, // Limit the length of the response
+    });
+
+    const generatedUI = completion.choices[0]?.message?.content?.trim();
+
+    if (!generatedUI) {
+      return res.status(500).json({ error: 'Failed to generate UI' });
+    }
+
+    return res.status(200).send(generatedUI);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
+/**
+ * The function deletes all resources and returns a success message or an error message if there is an
+ * issue.
+ * @param req - The `req` parameter is the request object, which contains information about the
+ * incoming HTTP request such as headers, query parameters, and request body. It is used to retrieve
+ * data from the client and pass it to the server.
+ * @param res - The `res` parameter is the response object that is used to send the response back to
+ * the client. It contains methods and properties that allow you to control the response, such as
+ * setting the status code, sending JSON data, or sending an error message.
+ */
+export const deleteAllResources = async (req, res) => {
+  try {
+    await Resource.deleteMany({});
+    res.status(200).json({ message: "All resources deleted" });
+  } catch (err) {
     res.status(400).json({ error: err.message });
   }
 }

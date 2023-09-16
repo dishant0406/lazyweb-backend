@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { showAllWebsites, setResourceAvailableForApproval, addWebsite, rejectResource, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource } from '../../controllers/index.js';
+import { showAllWebsites, generateUI, deleteAllResources, setResourceAvailableForApproval, getResourcesThatMatchDescription, addWebsite, rejectResource, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource } from '../../controllers/index.js';
 import { isAuthenticated } from '../../middleware/auth/protected.js';
 const router = Router();
 
@@ -32,5 +32,11 @@ router.get('/all-tags', getAllTags)
 router.get('/all-categories', getAllCategories)
 
 router.put('/like/:resourceId', isAuthenticated, likeAResource)
+
+router.post('/search', getResourcesThatMatchDescription)
+
+router.get('/delete-all', deleteAllResources)
+
+router.post('/generate-ui', generateUI)
 
 export default router;
