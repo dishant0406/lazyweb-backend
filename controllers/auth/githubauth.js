@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 import axios from 'axios'
 import { makeToken } from './login.js'
+import { User } from '../../Model/User.js'
 
 
 /**
@@ -56,8 +57,20 @@ const github = async (req, res) => {
     const emailResponse = await axios(options_email);
     const email = emailResponse.data.find(e => e.primary)?.email;
 
+    //findOne using User model by email if there is nothing then add the User
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      const newUser = new User({
+        email: email,
+        isAdmin: false
+      });
+      await newUser.save();
+    }
+
+
+
     // make a token
-    const token = makeToken(email);
+    const token = makeToken(email, false, user._id);
     return res.send(`
     <script>
       window.opener.postMessage({

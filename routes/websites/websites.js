@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { showAllWebsites, generateUI, deleteAllResources, setResourceAvailableForApproval, getResourcesThatMatchDescription, addWebsite, rejectResource, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource } from '../../controllers/index.js';
+import { showAllWebsites, generateUI, bulkBookmarkResources, getUserBookmarkedResources, deleteAllResources, setResourceAvailableForApproval, getResourcesThatMatchDescription, addWebsite, rejectResource, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource } from '../../controllers/index.js';
 import { isAuthenticated } from '../../middleware/auth/protected.js';
 const router = Router();
 
@@ -38,5 +38,9 @@ router.post('/search', getResourcesThatMatchDescription)
 router.get('/delete-all', deleteAllResources)
 
 router.post('/generate-ui', generateUI)
+
+router.get('/bookmarks/:id', getUserBookmarkedResources)
+
+router.post('/bulk-bookmark', isAuthenticated, bulkBookmarkResources)
 
 export default router;

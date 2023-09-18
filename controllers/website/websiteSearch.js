@@ -735,6 +735,71 @@ export const deleteAllResources = async (req, res) => {
   }
 }
 
+/**
+ * The function retrieves all resources that have been bookmarked by a specific user.
+ * @param req - The `req` parameter is the request object that contains information about the incoming
+ * HTTP request, such as the request headers, request body, and request parameters.
+ * @param res - The `res` parameter is the response object that is used to send the HTTP response back
+ * to the client. It is an instance of the Express `Response` object and has methods like `status()`
+ * and `json()` that are used to set the response status code and send JSON data back to the
+ */
+export const getUserBookmarkedResources = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const resources = await Resource.find({ bookmarked_by: { $in: [id] } });
+    res.status(200).json({ resources });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+export const bulkBookmarkResources = async (req, res) => {
+  const { email } = req.user;
+  const { resourceIds } = req.body;
+
+  // Fetch resources by IDs
+  const resources = await Resource.find({ _id: { $in: resourceIds } });
+
+  if (!resources || resources.length === 0) {
+    res.status(404).json({ error: "Resources not found" });
+    return;
+  }
+
+  // Fetch user by email
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const userId = user._id;
+
+  // Filter out resources that are already bookmarked by the user
+  const resourcesToBookmark = resources.filter(resource => {
+    return !resource.bookmarked_by.includes(userId);
+  });
+
+  // If no resources to bookmark, send a message
+  if (resourcesToBookmark.length === 0) {
+    res.status(200).json({ success: true, message: "No new resources to bookmark" });
+    return;
+  }
+
+  const resourcesToBookmarkIds = resourcesToBookmark.map(resource => resource._id);
+
+  try {
+    // Bookmark resources
+    await Resource.updateMany(
+      { _id: { $in: resourcesToBookmarkIds } },
+      { $addToSet: { bookmarked_by: userId } }
+    );
+    res.status(200).json({ success: true, message: "Resources bookmarked" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 
 
 
