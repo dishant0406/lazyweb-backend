@@ -13,6 +13,10 @@ const UserSchema = new Schema({
   isAdmin: {
     type: Boolean,
     default: false,
+  },
+  codeGenerated: {
+    type: Array,
+    default: []
   }
 });
 

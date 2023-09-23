@@ -76,7 +76,7 @@ const github = async (req, res) => {
       window.opener.postMessage({
         user: ${JSON.stringify(email)},
         jwt: '${token}'
-      }, '${process.env.BACKEND_URL}');
+      }, '${process.env.FRONTEND_URL}');
     </script>
   `);
   } catch (error) {
