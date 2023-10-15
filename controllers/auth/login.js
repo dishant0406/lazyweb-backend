@@ -65,6 +65,50 @@ const emailTemplate = ({ username, link }) => `
 </html>
 `;
 
+/** 
+* The function generates an email template with a login token for a user.
+*/
+const emailTemplateExt = ({ username, token }) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Access Token</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+  <div style="max-width: 600px; margin: auto; padding: 20px; background-color: #ffffff; box-shadow: 0px 3px 10px rgba(0,0,0,0.1);">
+    <!-- Logo -->
+    <div style="text-align: center; margin-bottom: 20px; background-color: #ffffff;">
+      <img src="https://i.ibb.co/cw3P4X6/Logo.png" alt="Lazyweb Logo" style="width: 100px; height: 100px;">
+    </div>
+
+    <!-- Greeting -->
+    <h2 style="font-size: 24px; color: #333333; margin-bottom: 10px;">Hey ${username},</h2>
+
+    <!-- Main Content -->
+    <p style="font-size: 18px; line-height: 1.6; color: #666666;">
+      We noticed you requested a new login token. No worries! Below is your secure token. Copy it and use it to log in.
+    </p>
+
+    <!-- Token Box -->
+    <div style="text-align: center; margin: 30px 0; padding: 10px; border: 1px solid #ddd; background-color: #f5f5f5; font-size: 16px; color: #444;">
+      ${token}
+    </div>
+
+    <!-- Secondary Content -->
+    <p style="font-size: 16px; line-height: 1.5; color: #666666;">
+      If you didn't request this token, please ignore this email or contact support if you have any questions.
+    </p>
+
+    <!-- Signature -->
+    <p style="font-size: 16px; line-height: 1.5; color: #666666; margin-top: 30px;">
+      Best,<br>
+      The Lazyweb Team
+    </p>
+  </div>
+</body>
+</html>
+`;
 
 
 
@@ -131,6 +175,60 @@ export const login = async (req, res) => {
     }
   });
 }
+
+/**
+ * This function logs in a user by sending a magic link to their email address and creating a token for
+ * them.
+ * @param - The email address of the user.
+ * @returns - The script that sends the magic link to the user's email address.
+ * @throws - An error if the request fails.
+ */
+export const loginExt = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(404);
+    res.send({
+      message: "You didn't enter a valid email address.",
+    });
+  }
+  let token;
+  //findOne using User model by email if there is nothing then add the User
+  const user = await User.findOne({ email })
+  if (!user) {
+    const newUser = new User({
+      email: email,
+      isAdmin: false,
+    })
+    await newUser.save()
+    token = makeToken(email, false, user._id);
+  } else {
+    token = makeToken(email, user.isAdmin, user._id);
+  }
+
+  const mailOptions = {
+    from: '"Lazyweb" <admin@lazyweb.rocks>',
+    html: emailTemplateExt({
+      username: email,
+      token: token,
+    }),
+    subject: "Your Magic Token",
+    to: email,
+  };
+  return transport.sendMail(mailOptions, (error) => {
+    if (error) {
+      res.status(404);
+      console.log(error)
+      res.send("Can't send email.");
+    } else {
+      res.status(200);
+      res.json({
+        message: "Magic token has been sent.",
+        success: true,
+      })
+    }
+  });
+}
+
 
 /**
  * This function verifies the token sent by the user.
