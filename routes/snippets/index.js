@@ -1,4 +1,4 @@
-import { createSnippet, createSnippetWithAI, getAllSnippets, getMySnippets, getSnippetById } from "../../controllers/snippet/snippetController.js";
+import { createSnippet, createSnippetWithAI, deleteSnippet, getAllSnippets, getMySnippets, getSnippetById } from "../../controllers/snippet/snippetController.js";
 import { isAuthenticated } from '../../middleware/auth/protected.js';
 import { Router } from 'express';
 
@@ -9,5 +9,7 @@ router.post('/create-ai', isAuthenticated, createSnippetWithAI);
 router.get('/all', getAllSnippets);
 router.get('/me', isAuthenticated, getMySnippets);
 router.get('/:id', getSnippetById);
+
+router.delete('/delete/:shortcut', isAuthenticated, deleteSnippet);
 
 export default router;
