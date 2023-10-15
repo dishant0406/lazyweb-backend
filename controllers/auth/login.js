@@ -131,3 +131,44 @@ export const login = async (req, res) => {
     }
   });
 }
+
+/**
+ * This function verifies the token sent by the user.
+ * @param - The token sent by the user.
+ * @returns - A message indicating whether the token is valid or not.
+ * @throws - An error if the request fails.
+ */
+export const verifyToken = async (req, res) => {
+  //token from Bearer token
+  const token = req.headers.authorization.split(" ")[1];
+
+  console.log(token);
+  if (!token) {
+    return res.status(404).send({
+      message: "You didn't enter a valid token.",
+      success: false,
+    });
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const user = await User.findById(decoded.id);
+    console.log(decoded);
+    console.log(user);
+    if (!user) {
+      return res.status(404).send({
+        message: "You didn't enter a valid token.",
+        success: false,
+      });
+    }
+    return res.status(200).json({
+      message: "Token is valid.",
+      success: true,
+      isAdmin: user.isAdmin,
+    });
+  } catch (error) {
+    return res.status(404).send({
+      message: "You didn't enter a valid token.",
+      success: false,
+    });
+  }
+}

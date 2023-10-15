@@ -504,8 +504,8 @@ export const setResourceAvailableForApproval = async (req, res) => {
 }
 
 /**
- * The function `getResourcesThatMatchDescription` takes a description as input and returns a list of
- * resources that match the description.
+ * The function `getResourcesThatMatchDescription` takes a description 
+ * as input and returns a list of resources that match the description.
  * @params - The description.
  * @returns - The list of resources that match the description.
  * @access - Public
@@ -759,6 +759,21 @@ export const bulkBookmarkResources = async (req, res) => {
   }
 };
 
+
+/**
+ * The function retrieves the 10 most recently added public resources and sends them as a JSON
+ * response.
+ * @returns - The list of 10 most recently added public resources.
+ * @access - Public
+ */
+export const getRecentlyAddedResources = async (req, res) => {
+  try {
+    const resources = await Resource.find({ isPublicAvailable: true }).sort({ createdAt: -1 }).limit(10);
+    res.status(200).json({ resources });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
 
 
 
