@@ -1,11 +1,16 @@
 import { Router } from 'express';
-import { showAllWebsites, generateUI, bulkBookmarkResources, getUserBookmarkedResources, deleteAllResources, setResourceAvailableForApproval, getResourcesThatMatchDescription, addWebsite, rejectResource, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource } from '../../controllers/index.js';
+import {
+  showAllWebsites, addWebsiteOnlyByURL,
+  getUserWebsitesNotPublic, generateUI, bulkBookmarkResources, getUserBookmarkedResources, deleteAllResources, setResourceAvailableForApproval, getResourcesThatMatchDescription, addWebsite, rejectResource, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource
+} from '../../controllers/index.js';
 import { isAuthenticated } from '../../middleware/auth/protected.js';
 const router = Router();
 
 router.get('/', showAllWebsites)
 
 router.get('/user', isAuthenticated, getUserWebsites)
+
+router.get('/user/pending', isAuthenticated, getUserWebsitesNotPublic)
 
 router.get('/bookmarked', isAuthenticated, getResourcesBookmarkedByUser)
 
@@ -26,6 +31,8 @@ router.put('/reject/:resourceId', isAuthenticated, rejectResource)
 router.put('/publish/:resourceId', isAuthenticated, setResourceAvailableForApproval)
 
 router.post('/add', isAuthenticated, addWebsite)
+
+router.post('/add-by-url', isAuthenticated, addWebsiteOnlyByURL)
 
 router.get('/all-tags', getAllTags)
 

@@ -2,6 +2,7 @@ import { Resource } from "../../Model/Resource.js"
 import { User } from "../../Model/User.js";
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import { getImageUrl, getMetaData } from "../../utils/webData.js";
 
 dotenv.config();
 
@@ -121,6 +122,79 @@ export const addWebsite = async (req, res) => {
 }
 
 /**
+ * This function adds a new website resource to the database, with information such as URL, image URL,
+ * title, description, and tags, and associates it with the user who added it.
+ * @params - The resource URL.
+ * @returns - The new resource object.
+ * @access - Private
+*/
+export const addWebsiteOnlyByURL = async (req, res) => {
+
+  // Extract the user's email from the request object
+  const { email } = req.user
+
+  // Extract the URL, image URL, title, and description from the request body
+  const { url } = req.body
+
+  // Find the user in the database based on their email
+  const user = await User.findOne({ email })
+
+  // If the user doesn't exist, send an error response and return from the function
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return
+  }
+
+  // Get the user's ID to use as a reference in the created_by field
+  const created_by = user._id
+
+  // Check if a resource with the same URL already exists in the database
+  const alreadyWebsite = await Resource.findOne({ url })
+
+  // If a resource with the same URL exists, add the user's ID to the created_by_list array
+  if (alreadyWebsite) {
+    const { created_by_list } = alreadyWebsite;
+    if (created_by_list.includes(created_by)) {
+      res.status(400).json({ error: "User already added this website" });
+      return;
+    } else {
+      await Resource.findByIdAndUpdate({
+        _id: alreadyWebsite._id
+      }, {
+        $push: { created_by_list: created_by }
+      })
+    }
+  }
+
+  // Create a new resource object using the input data
+  const imageURl = await getImageUrl(url);
+  const metaData = await getMetaData(url);
+
+  const resource = new Resource({
+    url,
+    image_url: imageURl,
+    title: metaData.title,
+    desc: metaData.description,
+    created_by,
+    created_by_list: [created_by],
+    isPublicAvailable: false,
+    category: "",
+    tags: []
+  })
+
+  // Try to save the new resource to the database
+  try {
+    const newResource = await resource.save();
+    // If the resource is saved successfully, send a response with the new resource data
+    res.status(201).json(newResource);
+  }
+  catch (err) {
+    // If there is an error saving the resource, send an error response with the error message
+    res.status(400).json({ error: err.message });
+  }
+}
+
+/**
  * This function retrieves a list of websites created by a user based on their email.
  * @returns - The list of websites created by the user.
  * @access - Private
@@ -153,6 +227,43 @@ export const getUserWebsites = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 }
+
+/**
+ * This function retrieves a list of websites created by a user based on their email that are not
+ * available for public viewing.
+ * @returns - The list of websites created by the user that are not available for public viewing.
+ * @access - Private
+ */
+export const getUserWebsitesNotPublic = async (req, res) => {
+  const { email } = req.user;
+
+  // Find the user in the database based on their email
+  const user = await User.findOne({ email });
+
+  // If the user doesn't exist, send an error response and return from the function
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  // Get the user's ID to use as a reference in the created_by_list field
+  const user_id = user._id;
+
+  try {
+    // Find all resources that were created by the user
+    const userWebsites = await Resource.find({
+      created_by_list: { $in: [user_id] },
+      isPublicAvailable: false
+    });
+
+    // Send a response with the list of user's websites
+    res.status(200).json({ userWebsites });
+  } catch (err) {
+    // If there is an error retrieving the user's websites, send an error response with the error message
+    res.status(500).json({ error: err.message });
+  }
+}
+
 
 /**
  * This function updates a resource's category and tags, and sets a flag if both are updated, returning
@@ -210,7 +321,7 @@ export const getResourcesByCategories = async (req, res) => {
   }
 
   try {
-    const resources = await Resource.find({ category: { $in: categories } });
+    const resources = await Resource.find({ category: { $in: categories }, isPublicAvailable: true });
     res.status(200).json({ resources });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -231,7 +342,7 @@ export const getResourcesByTags = async (req, res) => {
   }
 
   try {
-    const resources = await Resource.find({ tags: { $in: tags } });
+    const resources = await Resource.find({ tags: { $in: tags }, isPublicAvailable: true });
     res.status(200).json({ resources });
   } catch (err) {
     res.status(400).json({ error: err.message });
