@@ -916,8 +916,8 @@ export const refetchImageAndUpdateResource = async (req, res) => {
       res.status(403).json({ error: "Unauthorized" });
       return;
     }
-
     const imageURl = await getImageUrl(resource.url, true);
+    console.log(imageURl)
     resource.image_url = imageURl;
     await resource.save();
     res.status(200).json(resource);

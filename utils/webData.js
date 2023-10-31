@@ -7,6 +7,7 @@ import captureWebsite from 'capture-website';
 import apicache from 'apicache-plus';
 import { extractMetadata } from 'link-meta-extractor';
 import dotenv from 'dotenv';
+import { nodeScreenshot } from '@amosayomide05/nodescreenshot'
 import { S3Client, PutObjectCommand, HeadObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 dotenv.config();
@@ -28,16 +29,35 @@ const unFormatUrl = (url) => {
   url = url.toLowerCase();
   // Remove any https:// that appears at the beginning of the string
   url = url.replace('https://', '');
-  url = url.replaceAll('?', '');
   // Remove any www. that appears at the beginning of the string
   url = url.replace('www.', '');
+  // Remove any http:// that appears at the beginning of the string
+  url = url.replace('http://', '');
+  // Remove any / that appears at the end of the string
+  url = url.replace(/\/+$/, '');
+  return url;
+};
+
+const formatUrl = (url) => {
+  // Ensure URL starts with http:// or https://
+  if (!/^https?:\/\//i.test(url)) {
+    url = 'https://' + url;
+  }
+
+  // // Add www. if it is missing
+  // if (!/^https?:\/\/www\./i.test(url)) {
+  //   url = url.replace(/^https?:\/\//i, '$&www.');
+  // }
+
+  // Remove any trailing '/'
+  url = url.replace(/\/+$/, '');
+
   return url;
 };
 
 export const getImageUrl = async (url, latest = false) => {
   const formattedUrl = unFormatUrl(url);
   let s3Key = `${formattedUrl}.webp`;
-
   // Check if image exists in S3
   try {
     const headObject = await S3.send(new HeadObjectCommand({
@@ -53,7 +73,7 @@ export const getImageUrl = async (url, latest = false) => {
           Key: s3Key,
         }));
 
-        const screenShortBuffer = await captureWebsite.buffer(url, {
+        const screenShortBuffer = await captureWebsite.buffer(formatUrl(url), {
           launchOptions: {
             args: [
               '--no-sandbox',
@@ -82,7 +102,7 @@ export const getImageUrl = async (url, latest = false) => {
     }
   } catch (err) {
     if (err.name === 'NotFound') {
-      const screenShortBuffer = await captureWebsite.buffer(url, {
+      const screenShortBuffer = await captureWebsite.buffer(formatUrl(url), {
         launchOptions: {
           args: [
             '--no-sandbox',
@@ -95,7 +115,6 @@ export const getImageUrl = async (url, latest = false) => {
         height: 288,
         quality: 0.3,
       });
-
       // Upload to S3
       await S3.send(new PutObjectCommand({
         Bucket: process.env.BUCKET_NAME,
@@ -106,7 +125,6 @@ export const getImageUrl = async (url, latest = false) => {
 
       return `${process.env.PUBLIC_ENDPOINT}/${s3Key}`;
     }
-
     throw err;
   }
 };

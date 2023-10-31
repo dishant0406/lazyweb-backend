@@ -29,6 +29,7 @@
     "doc": "jsdoc2md ./controllers/**/*.js > README.md"
   },
   "dependencies": {
+    "@amosayomide05/nodescreenshot": "^1.0.2",
     "@aws-sdk/client-s3": "^3.438.0",
     "apicache-plus": "^2.3.1",
     "apollo-server-express": "^3.11.1",
