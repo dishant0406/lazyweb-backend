@@ -7,7 +7,7 @@ import captureWebsite from 'capture-website';
 import apicache from 'apicache-plus';
 import { extractMetadata } from 'link-meta-extractor';
 import dotenv from 'dotenv';
-import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, HeadObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 dotenv.config();
 
@@ -34,9 +34,9 @@ const unFormatUrl = (url) => {
   return url;
 };
 
-export const getImageUrl = async (url) => {
+export const getImageUrl = async (url, latest = false) => {
   const formattedUrl = unFormatUrl(url);
-  const s3Key = `${formattedUrl}.webp`;
+  let s3Key = `${formattedUrl}.webp`;
 
   // Check if image exists in S3
   try {
@@ -46,6 +46,38 @@ export const getImageUrl = async (url) => {
     }));
 
     if (headObject) {
+      if (latest) {
+        //delete old image
+        await S3.send(new DeleteObjectCommand({
+          Bucket: process.env.BUCKET_NAME,
+          Key: s3Key,
+        }));
+
+        const screenShortBuffer = await captureWebsite.buffer(url, {
+          launchOptions: {
+            args: [
+              '--no-sandbox',
+              '--disable-setuid-sandbox'
+            ]
+          },
+
+          type: 'webp',
+          width: 460,
+          height: 288,
+          quality: 0.3,
+        });
+
+        // Upload to S3
+        await S3.send(new PutObjectCommand({
+          Bucket: process.env.BUCKET_NAME,
+          Key: s3Key,
+          Body: screenShortBuffer,
+          ContentType: 'image/webp',
+        }));
+
+        return `${process.env.PUBLIC_ENDPOINT}/${s3Key}`;
+      }
+
       return `${process.env.PUBLIC_ENDPOINT}/${s3Key}`;
     }
   } catch (err) {

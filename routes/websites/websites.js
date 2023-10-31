@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import {
   showAllWebsites, addWebsiteOnlyByURL,
-  getUserWebsitesNotPublic, generateUI, bulkBookmarkResources, getUserBookmarkedResources, deleteAllResources, setResourceAvailableForApproval, getResourcesThatMatchDescription, addWebsite, rejectResource, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource
+  getUserWebsitesNotPublic, refetchImageAndUpdateResource, refetchMetaAndUpdateResource, generateUI, bulkBookmarkResources, getUserBookmarkedResources, deleteAllResources, setResourceAvailableForApproval, getResourcesThatMatchDescription, addWebsite, rejectResource, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource
 } from '../../controllers/index.js';
 import { isAuthenticated } from '../../middleware/auth/protected.js';
 const router = Router();
@@ -25,6 +25,10 @@ router.put('/update/:resourceId', isAuthenticated, updateResource)
 router.put('/bookmark/:resourceId', isAuthenticated, bookmarkResource)
 
 router.put('/approve/:resourceId', isAuthenticated, setPublicAvailability)
+
+router.put('/refetch-image/:resourceId', isAuthenticated, refetchImageAndUpdateResource)
+
+router.put('/refetch-meta/:resourceId', isAuthenticated, refetchMetaAndUpdateResource)
 
 router.put('/reject/:resourceId', isAuthenticated, rejectResource)
 

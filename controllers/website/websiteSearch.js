@@ -886,6 +886,87 @@ export const getRecentlyAddedResources = async (req, res) => {
   }
 }
 
+/**
+ * The function retrieves the latest image URL for a resource and updates the resource's image URL
+ * field.
+ * @params - The resource ID.
+ * @returns - The updated resource or an error message.
+ * @access - Private
+ */
+export const refetchImageAndUpdateResource = async (req, res) => {
+  const { resourceId } = req.params;
+  const { email } = req.user;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  try {
+    const resource = await Resource.findById(resourceId);
+
+    if (!resource) {
+      res.status(404).json({ error: "Resource not found" });
+      return;
+    }
+
+    if (!resource.created_by_list.includes(user._id)) {
+      res.status(403).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const imageURl = await getImageUrl(resource.url, true);
+    resource.image_url = imageURl;
+    await resource.save();
+    res.status(200).json(resource);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+/**
+ * The function retrieves the latest meta data for a resource and updates the resource's title and
+ * description fields.
+ * @params - The resource ID.
+ * @returns - The updated resource or an error message.
+ * @access - Private
+ */
+export const refetchMetaAndUpdateResource = async (req, res) => {
+  const { resourceId } = req.params;
+  const { email } = req.user;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  try {
+    const resource = await Resource.findById(resourceId);
+
+    if (!resource) {
+      res.status(404).json({ error: "Resource not found" });
+      return;
+    }
+
+    if (!resource.created_by_list.includes(user._id)) {
+      res.status(403).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const metaData = await getMetaData(resource.url);
+    resource.title = metaData.title;
+    resource.desc = metaData.description;
+    await resource.save();
+    res.status(200).json(resource);
+  }
+  catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
 
 
 
