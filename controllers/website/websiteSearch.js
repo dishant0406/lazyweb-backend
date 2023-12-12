@@ -307,6 +307,45 @@ export const updateResource = async (req, res) => {
   }
 }
 
+
+/**
+ * This function updates a resource's title and description, and sets a flag if both are updated,
+ * returning the updated resource or an error message.
+ * @params - The resource ID, title, and description.
+ * @returns - The updated resource or an error message.
+ * @access - Private
+*/
+export const updateResourceTitleAndDesc = async (req, res) => {
+  const { resourceId } = req.params;
+  const { title, desc } = req.body;
+
+  try {
+    let resource = await Resource.findById(resourceId);
+
+    if (!resource) {
+      res.status(404).json({ error: "Resource not found" });
+      return;
+    }
+
+    if (title) {
+      resource.title = title;
+    }
+
+    if (desc) {
+      resource.desc = desc;
+    }
+
+    resource.isPublicAvailable = false;
+    resource.isAvailableForApproval = true;
+
+    const updatedResource = await resource.save();
+    res.status(200).json(updatedResource);
+  }
+  catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
 /**
  * This function retrieves resources based on categories provided in the request body.
  * @params - The categories.
@@ -925,6 +964,54 @@ export const refetchImageAndUpdateResource = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+/**
+ * The function retrieves the latest image URL for a resource and updates the resource's image URL
+ * field.
+ * @params - The resource ID.
+ * @params - The resource URL.
+ * @returns - The updated resource or an error message.
+ * @access - Private
+ */
+export const refetchImageAndUpdateResourceByURL = async (req, res) => {
+  const { resourceId } = req.params;
+  const { email } = req.user;
+
+  const { url } = req.body;
+
+  if (!url) {
+    res.status(400).json({ error: "URL not found" });
+    return;
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  try {
+    const resource = await Resource.findById(resourceId);
+
+    if (!resource) {
+      res.status(404).json({ error: "Resource not found" });
+      return;
+    }
+
+    if (!resource.created_by_list.includes(user._id)) {
+      res.status(403).json({ error: "Unauthorized" });
+      return;
+    }
+    const imageURl = await getImageUrl(url);
+    resource.image_url = imageURl;
+    await resource.save();
+    res.status(200).json(resource);
+  }
+  catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
 
 /**
  * The function retrieves the latest meta data for a resource and updates the resource's title and

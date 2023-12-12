@@ -80,6 +80,20 @@ app.post('/ss', apicache('60 minutes'), async (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Welcome to the Lazyweb API',
+    success: true,
+    status: 200,
+    data: {
+      version: '1.0.0',
+      author: 'Dishant Sharma',
+      github: 'https://github.com/dishant0406',
+      website: 'https://dishantsharma.dev',
+    },
+  });
+})
+
 let port = process.env.PORT || 3000
 server.listen({ port }, () =>
   console.log(`🚀 Server ready at http://localhost:${port}`)
