@@ -39,14 +39,13 @@ const screenshotPath = path.join(__dirname, 'screenshots');
 // };
 
 // Set up middleware
-app.use(cors(
-  [
-    'http://localhost:3000',
-    'https://lazyweb.rocks',
-    'https://app.lazyweb.rocks',
+const corsOptions = {
+  origin: ['http://localhost:3000', 'https://lazyweb.rocks', 'https://app.lazyweb.rocks'],
+  allowedHeaders: '*',
+  credentials: true,
+};
 
-  ]
-));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(logger);
