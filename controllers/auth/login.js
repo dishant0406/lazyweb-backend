@@ -161,7 +161,7 @@ export const login = async (req, res) => {
     subject: "Your Magic Link",
     to: email,
   };
-  return transport.sendMail(mailOptions, (error) => {
+  await transport.sendMail(mailOptions, (error) => {
     if (error) {
       res.status(404);
       console.log(error)
@@ -214,10 +214,9 @@ export const loginExt = async (req, res) => {
     subject: "Your Magic Token",
     to: email,
   };
-  return transport.sendMail(mailOptions, (error) => {
+  await transport.sendMail(mailOptions, (error) => {
     if (error) {
       res.status(404);
-      console.log(error)
       res.send("Can't send email.");
     } else {
       res.status(200);
@@ -226,7 +225,9 @@ export const loginExt = async (req, res) => {
         success: true,
       })
     }
-  });
+  }
+  );
+
 }
 
 
