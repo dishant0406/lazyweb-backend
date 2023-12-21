@@ -133,21 +133,20 @@ export const makeToken = (email, isAdmin = false, id) => {
 export const login = async (req, res) => {
   const { email } = req.body;
   if (!email) {
-    res.status(404);
-    res.send({
+    return res.status(404).send({
       message: "You didn't enter a valid email address.",
     });
   }
   let token;
   //findOne using User model by email if there is nothing then add the User
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ email });
   if (!user) {
     const newUser = new User({
       email: email,
       isAdmin: false,
-    })
-    await newUser.save()
-    token = makeToken(email, false, user._id);
+    });
+    await newUser.save();
+    token = makeToken(email, false, newUser._id);
   } else {
     token = makeToken(email, user.isAdmin, user._id);
   }
@@ -161,21 +160,20 @@ export const login = async (req, res) => {
     subject: "Your Magic Link",
     to: email,
   };
-  await transport.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      res.status(404);
-      console.log(error)
-      res.send("Can't send email.");
-    } else {
-      res.status(200);
-      res.json({
-        message: "Magic link has been sent.",
-        info: info,
-        success: true,
-      })
-    }
-  });
-}
+
+  try {
+    const info = await transport.sendMail(mailOptions);
+    res.status(200).json({
+      message: "Magic link has been sent.",
+      info: info,
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(404).send("Can't send email.");
+  }
+};
+
 
 /**
  * This function logs in a user by sending a magic link to their email address and creating a token for
@@ -187,21 +185,20 @@ export const login = async (req, res) => {
 export const loginExt = async (req, res) => {
   const { email } = req.body;
   if (!email) {
-    res.status(404);
-    res.send({
+    return res.status(404).send({
       message: "You didn't enter a valid email address.",
     });
   }
   let token;
   //findOne using User model by email if there is nothing then add the User
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ email });
   if (!user) {
     const newUser = new User({
       email: email,
       isAdmin: false,
-    })
-    await newUser.save()
-    token = makeToken(email, false, user._id);
+    });
+    await newUser.save();
+    token = makeToken(email, false, newUser._id);
   } else {
     token = makeToken(email, user.isAdmin, user._id);
   }
@@ -215,22 +212,20 @@ export const loginExt = async (req, res) => {
     subject: "Your Magic Token",
     to: email,
   };
-  await transport.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      res.status(404);
-      res.send("Can't send email.");
-    } else {
-      res.status(200);
-      res.json({
-        message: "Magic token has been sent.",
-        success: true,
-        info: info
-      })
-    }
-  }
-  );
 
-}
+  try {
+    const info = await transport.sendMail(mailOptions);
+    res.status(200).json({
+      message: "Magic token has been sent.",
+      success: true,
+      info: info
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(404).send("Can't send email.");
+  }
+};
+
 
 
 /**
