@@ -10,7 +10,7 @@ import { User } from "../../Model/User.js";
 specifying the email service provider's host, port, and authentication details (email and password)
 to create the transport object. In this case, it is using the Zoho email service provider. */
 const transport = nodeMailer.createTransport({
-  host: "smtp.zoho.in",
+  host: "smtp.mail.us-east-1.awsapps.com",
   port: 465,
   secure: true,
   auth: {
@@ -153,7 +153,7 @@ export const login = async (req, res) => {
   }
 
   const mailOptions = {
-    from: '"Lazyweb" <admin@lazyweb.rocks>',
+    from: '"Lazyweb" <dishant@lazyweb.rocks>',
     html: emailTemplate({
       username: email,
       link: `${process.env.FRONTEND_URL}/?token=${token}`,
@@ -206,7 +206,7 @@ export const loginExt = async (req, res) => {
   }
 
   const mailOptions = {
-    from: '"Lazyweb" <admin@lazyweb.rocks>',
+    from: '"Lazyweb" <dishant@lazyweb.rocks>',
     html: emailTemplateExt({
       username: email,
       token: token,
