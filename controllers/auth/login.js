@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 import jwt from 'jsonwebtoken'
 import { User } from "../../Model/User.js";
+import { sendMail } from "../../utils/sendMail.js";
 
 
 /* This code is creating a transport object using the nodemailer library to send emails. It is
@@ -151,18 +152,12 @@ export const login = async (req, res) => {
     token = makeToken(email, user.isAdmin, user._id);
   }
 
-  const mailOptions = {
-    from: '"Lazyweb" <dishant@lazyweb.rocks>',
-    html: emailTemplate({
+  try {
+    const info = await sendMail(email, "Your Magic Link", emailTemplate({
       username: email,
       link: `${process.env.FRONTEND_URL}/?token=${token}`,
-    }),
-    subject: "Your Magic Link",
-    to: email,
-  };
+    }));
 
-  try {
-    const info = await transport.sendMail(mailOptions);
     res.status(200).json({
       message: "Magic link has been sent.",
       info: info,
@@ -203,18 +198,12 @@ export const loginExt = async (req, res) => {
     token = makeToken(email, user.isAdmin, user._id);
   }
 
-  const mailOptions = {
-    from: '"Lazyweb" <dishant@lazyweb.rocks>',
-    html: emailTemplateExt({
+  try {
+    const info = await sendMail(email, "Your Magic Token", emailTemplateExt({
       username: email,
       token: token,
-    }),
-    subject: "Your Magic Token",
-    to: email,
-  };
+    }));
 
-  try {
-    const info = await transport.sendMail(mailOptions);
     res.status(200).json({
       message: "Magic token has been sent.",
       success: true,
