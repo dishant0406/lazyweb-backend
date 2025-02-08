@@ -39,9 +39,6 @@ jobs:
           echo "R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}" >> .env
           echo "SES_ACCESS_KEY=${{ secrets.SES_ACCESS_KEY }}" >> .env
           echo "SES_SCERET_KEY=${{ secrets.SES_SCERET_KEY }}" >> .env
-
-      - name: Print .env file
-        run: cat .env
       
       - name: Log in to Azure Container Registry
         uses: docker/login-action@v2

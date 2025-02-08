@@ -86,10 +86,11 @@ const github = async (req, res) => {
  * @throws - An error if the request fails.
  */
 const githubOAuth = (req, res) => {
-  return res.redirect(`${process.env.GH_AUTH_URL}${process.env.GH_CLIENT_ID}&scope=user:email`);
+  return res.redirect(`${process.env.GH_AUTH_URL}=${process.env.GH_CLIENT_ID}&scope=user:email`);
 }
 
 export {
-    github,
-    githubOAuth
+  github,
+  githubOAuth
 };
+
