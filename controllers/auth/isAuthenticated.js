@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
+import { User } from '../../Model/User.js';
 dotenv.config();
-import jwt from 'jsonwebtoken'
-import { User } from '../../Model/User.js'
 
 /**
  * This function checks if a user is authenticated by verifying their token and redirecting them to a
