@@ -1,7 +1,7 @@
-import { Resource } from "../../Model/Resource.js"
-import { User } from "../../Model/User.js";
-import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import OpenAI from 'openai';
+import { Resource } from "../../Model/Resource.js";
+import { User } from "../../Model/User.js";
 import { getImageUrl, getMetaData } from "../../utils/webData.js";
 
 dotenv.config();
@@ -9,6 +9,31 @@ dotenv.config();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+
+function splitKeywords(inputString) {
+  // Remove leading and trailing whitespace
+  inputString = inputString.trim();
+  
+  // Split the string by quotes, keeping both quoted and unquoted parts
+  const regex = /"([^"]*)"|([^"]+)/g;
+  let matches = [];
+  let match;
+  
+  while ((match = regex.exec(inputString)) !== null) {
+    if (match[1] !== undefined) {
+      // This is a quoted part
+      matches.push(match[1]);
+    } else if (match[2] !== undefined) {
+      // This is an unquoted part
+      matches.push(match[2].trim());
+    }
+  }
+  
+  // Remove any empty strings from the result
+  return matches.filter(item => item !== '');
+}
+
+
 
 /**
  * This function retrieves all public available resources, their tags and categories, and a daily
@@ -20,8 +45,11 @@ export const showAllWebsites = async (req, res) => {
   try {
     const resources = await Resource.find({ isPublicAvailable: true });
     const allResources = await Resource.find();
-    const tags = [...new Set(resources.reduce((tags, resource) => tags.concat(resource.tags.map(tag => tag.toLowerCase())), []))];
-    const allTags = [...new Set(allResources.reduce((tags, resource) => tags.concat(resource.tags?.map(tag => tag?.toLowerCase())), []))].filter(tag => tag !== undefined);
+    let tags = [...new Set(resources.reduce((tags, resource) => tags.concat(resource.tags.map(tag => tag.toLowerCase())), []))];
+    //use splitKeywords function to split the tags and then give array of unique tags
+    tags = tags.map(tag => splitKeywords(tag)).flat();
+    let allTags = [...new Set(allResources.reduce((tags, resource) => tags.concat(resource.tags?.map(tag => tag?.toLowerCase())), []))].filter(tag => tag !== undefined);
+    allTags = allTags.map(tag => splitKeywords(tag)).flat();
     const categories = [...new Set(resources.reduce((categories, resource) => categories.concat(resource.category.toLowerCase()), []))];
     const allCategories = [...new Set(allResources.reduce((categories, resource) => categories.concat(resource.category?.toLowerCase()), []))].filter(category => category !== undefined);
     const today = new Date();
@@ -30,6 +58,185 @@ export const showAllWebsites = async (req, res) => {
     const dailyResource = resources.find((_, i) => i === index);
 
     res.json({ resources, allTags, allCategories, dailyResource, tags, categories });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * This function retrieves all tags and categories from public and all resources,
+ * applies the splitKeywords function to split the tags, and returns the unique tags and categories.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Promise<void>} - A promise that resolves to void.
+ * @access - Public
+ */
+export const getAllTagsAndCategories = async (req, res) => {
+  try {
+    const [publicResult, allResult] = await Promise.all([
+      Resource.aggregate([
+        { $match: { isPublicAvailable: true } },
+        {
+          $group: {
+            _id: null,
+            tags: { $push: "$tags" },
+            categories: { $addToSet: { $toLower: "$category" } }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            tags: {
+              $reduce: {
+                input: "$tags",
+                initialValue: [],
+                in: { $setUnion: ["$$value", "$$this"] }
+              }
+            },
+            categories: 1
+          }
+        },
+        {
+          $project: {
+            tags: {
+              $map: {
+                input: "$tags",
+                as: "tag",
+                in: { $toLower: "$$tag" }
+              }
+            },
+            categories: 1
+          }
+        }
+      ]),
+      Resource.aggregate([
+        {
+          $group: {
+            _id: null,
+            tags: { $push: "$tags" },
+            categories: { $addToSet: { $toLower: "$category" } }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            tags: {
+              $reduce: {
+                input: "$tags",
+                initialValue: [],
+                in: { $setUnion: ["$$value", "$$this"] }
+              }
+            },
+            categories: 1
+          }
+        },
+        {
+          $project: {
+            tags: {
+              $map: {
+                input: "$tags",
+                as: "tag",
+                in: { $toLower: "$$tag" }
+              }
+            },
+            categories: 1
+          }
+        }
+      ])
+    ]);
+
+    const publicTags = publicResult[0]?.tags || [];
+    const publicCategories = publicResult[0]?.categories || [];
+    const allTags = allResult[0]?.tags || [];
+    const allCategories = allResult[0]?.categories || [];
+
+    // Apply splitKeywords to tags
+    const splitTags = (tags) => tags.flatMap(tag => splitKeywords(tag));
+
+    res.json({
+      publicTags: splitTags(publicTags),
+      publicCategories,
+      allTags: splitTags(allTags),
+      allCategories
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+/**
+ * Retrieves paginated resources and a daily resource.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} req.query - The query parameters.
+ * @param {number} [req.query.cursor=0] - The cursor for pagination.
+ * @param {number} [req.query.limit=10] - The limit for pagination.
+ * @param {Object} res - The response object.
+ * @returns {Promise<void>} - A promise that resolves to void.
+ */
+export const getPaginatedResources = async (req, res) => {
+  try {
+    const { cursor = 0, limit = 10 } = req.query;
+    const parsedCursor = parseInt(cursor, 10);
+    const parsedLimit = parseInt(limit, 10);
+
+    const today = new Date();
+    const daysSinceEpoch = Math.floor(today.getTime() / (1000 * 60 * 60 * 24));
+
+    const [{ paginatedResults, totalCount, dailyResource }] = await Resource.aggregate([
+      { $match: { isPublicAvailable: true } },
+      {
+        $facet: {
+          paginatedResults: [
+            { $sort: { createdAt: -1, _id: 1 } }, // Add _id to the sort to ensure a stable order
+            { $skip: parsedCursor },
+            { $limit: parsedLimit },
+          ],
+          totalCount: [
+            { $count: 'count' },
+          ],
+          allPublicResources: [
+            {
+              $group: {
+                _id: null,
+                count: { $sum: 1 },
+                resources: { $push: '$$ROOT' },
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          paginatedResults: 1,
+          totalCount: { $arrayElemAt: ['$totalCount.count', 0] },
+          dailyResource: {
+            $let: {
+              vars: {
+                index: {
+                  $mod: [daysSinceEpoch, { $arrayElemAt: ['$allPublicResources.count', 0] }],
+                },
+              },
+              in: {
+                $arrayElemAt: [{ $arrayElemAt: ['$allPublicResources.resources', 0] }, '$$index'],
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    const nextCursor = parsedCursor + paginatedResults.length;
+    const hasMore = nextCursor < totalCount;
+
+    res.json({
+      resources: paginatedResults,
+      nextCursor: hasMore ? nextCursor : null,
+      hasMore,
+      totalCount,
+      dailyResource,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -359,13 +566,30 @@ export const getResourcesByCategories = async (req, res) => {
     categories = categories.split(',');
   }
 
+  // Convert all passed categories to lowercase
+  categories = categories.map(category => category.trim().toLowerCase());
+
   try {
-    const resources = await Resource.find({ category: { $in: categories }, isPublicAvailable: true });
+    const resources = await Resource.aggregate([
+      {
+        $match: {
+          isPublicAvailable: true,
+          $expr: {
+            $in: [
+              { $toLower: "$category" },
+              categories
+            ]
+          }
+        }
+      }
+    ]);
+
     res.status(200).json({ resources });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-}
+};
+
 
 /**
  * This function retrieves resources based on tags provided in the request body.
@@ -380,13 +604,41 @@ export const getResourcesByTags = async (req, res) => {
     tags = tags.split(',');
   }
 
+  // Convert all passed tags to lowercase and trim whitespace
+  tags = tags.map(tag => tag.trim().toLowerCase());
+
   try {
-    const resources = await Resource.find({ tags: { $in: tags }, isPublicAvailable: true });
+    const resources = await Resource.aggregate([
+      {
+        $match: {
+          isPublicAvailable: true,
+          $expr: {
+            $gt: [
+              {
+                $size: {
+                  $setIntersection: [
+                    { $map: {
+                        input: "$tags",
+                        as: "tag",
+                        in: { $toLower: "$$tag" }
+                    }},
+                    tags
+                  ]
+                }
+              },
+              0
+            ]
+          }
+        }
+      }
+    ]);
+
     res.status(200).json({ resources });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-}
+};
+
 
 /**
  * This function allows a user to bookmark or unbookmark a resource and updates the resource's

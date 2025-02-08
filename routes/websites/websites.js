@@ -1,12 +1,40 @@
 import { Router } from 'express';
 import {
-  showAllWebsites, addWebsiteOnlyByURL,
-  getUserWebsitesNotPublic, refetchImageAndUpdateResource, refetchMetaAndUpdateResource, generateUI, bulkBookmarkResources, getUserBookmarkedResources, deleteAllResources, setResourceAvailableForApproval, getResourcesThatMatchDescription, addWebsite, rejectResource, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource
+  addWebsite,
+  addWebsiteOnlyByURL,
+  bookmarkResource,
+  bulkBookmarkResources,
+  deleteAllResources,
+  generateUI,
+  getAllCategories,
+  getAllTags,
+  getAllTagsAndCategories,
+  getPaginatedResources,
+  getResourcesBookmarkedByUser,
+  getResourcesByCategories,
+  getResourcesByTags,
+  getResourcesThatMatchDescription,
+  getUserBookmarkedResources,
+  getUserWebsites,
+  getUserWebsitesNotPublic,
+  likeAResource,
+  refetchImageAndUpdateResource,
+  refetchMetaAndUpdateResource,
+  rejectResource,
+  setPublicAvailability,
+  setResourceAvailableForApproval,
+  showAllWebsites,
+  showIsAvailableForApproval,
+  updateResource
 } from '../../controllers/index.js';
 import { isAuthenticated } from '../../middleware/auth/protected.js';
 const router = Router();
 
 router.get('/', showAllWebsites)
+
+router.get('/tnc', getAllTagsAndCategories)
+
+router.get('/page', getPaginatedResources)
 
 router.get('/user', isAuthenticated, getUserWebsites)
 

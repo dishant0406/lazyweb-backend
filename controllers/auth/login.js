@@ -1,24 +1,9 @@
 //controller
-import nodeMailer from "nodemailer";
 import dotenv from 'dotenv';
-dotenv.config();
-import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken';
 import { User } from "../../Model/User.js";
 import { sendMail } from "../../utils/sendMail.js";
-
-
-/* This code is creating a transport object using the nodemailer library to send emails. It is
-specifying the email service provider's host, port, and authentication details (email and password)
-to create the transport object. In this case, it is using the Zoho email service provider. */
-const transport = nodeMailer.createTransport({
-  host: "smtp.mail.us-east-1.awsapps.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
-});
+dotenv.config();
 
 
 /**
@@ -169,7 +154,6 @@ export const login = async (req, res) => {
   }
 };
 
-
 /**
  * This function logs in a user by sending a magic link to their email address and creating a token for
  * them.
@@ -227,7 +211,6 @@ export const verifyToken = async (req, res) => {
   //token from Bearer token
   const token = req.headers.authorization.split(" ")[1];
 
-  console.log(token);
   if (!token) {
     return res.status(404).send({
       message: "You didn't enter a valid token.",

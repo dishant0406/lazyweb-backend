@@ -1,14 +1,10 @@
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-import http from 'http';
-import fs from 'fs'
-import path from 'path';
+import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import captureWebsite from 'capture-website';
-import apicache from 'apicache-plus';
-import { extractMetadata } from 'link-meta-extractor';
 import dotenv from 'dotenv';
-import { nodeScreenshot } from '@amosayomide05/nodescreenshot'
-import { S3Client, PutObjectCommand, HeadObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { extractMetadata } from 'link-meta-extractor';
+import path, { dirname } from 'path';
+import sharp from 'sharp';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -58,68 +54,89 @@ const formatUrl = (url) => {
 export const getImageUrl = async (url, latest = false) => {
   const formattedUrl = unFormatUrl(url);
   let s3Key = `${formattedUrl}.webp`;
-  // Check if image exists in S3
+
   try {
     const headObject = await S3.send(new HeadObjectCommand({
       Bucket: process.env.BUCKET_NAME,
       Key: s3Key,
     }));
 
-    if (headObject) {
-      if (latest) {
-        //delete old image
-        await S3.send(new DeleteObjectCommand({
-          Bucket: process.env.BUCKET_NAME,
-          Key: s3Key,
-        }));
-
-        const screenShortBuffer = await captureWebsite.buffer(formatUrl(url), {
-          launchOptions: {
-            args: [
-              '--no-sandbox',
-              '--disable-setuid-sandbox'
-            ]
-          },
-
-          type: 'webp',
-          width: 460,
-          height: 288,
-          quality: 0.3,
-        });
-
-        // Upload to S3
-        await S3.send(new PutObjectCommand({
-          Bucket: process.env.BUCKET_NAME,
-          Key: s3Key,
-          Body: screenShortBuffer,
-          ContentType: 'image/webp',
-        }));
-
-        return `${process.env.PUBLIC_ENDPOINT}/${s3Key}`;
-      }
-
+    if (headObject && !latest) {
       return `${process.env.PUBLIC_ENDPOINT}/${s3Key}`;
     }
+
+    if (latest) {
+      await S3.send(new DeleteObjectCommand({
+        Bucket: process.env.BUCKET_NAME,
+        Key: s3Key,
+      }));
+    }
+
+    const screenShotBuffer = await captureWebsite.buffer(formatUrl(url), {
+      launchOptions: {
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+        ]
+      },
+      type: 'png',
+      width: 1920,
+      height: 1080,
+
+    });
+
+    // Resize the PNG image
+    const resizedPngBuffer = await sharp(screenShotBuffer)
+      .resize(460, 288, { fit: 'cover' })
+      .png()
+      .toBuffer();
+
+    // Convert the resized PNG to WebP with compression
+    const webpBuffer = await sharp(resizedPngBuffer)
+      .webp({ quality: 80, effort: 6 })
+      .toBuffer();
+
+    // Upload to S3
+    await S3.send(new PutObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: s3Key,
+      Body: webpBuffer,
+      ContentType: 'image/webp',
+    }));
+
+    return `${process.env.PUBLIC_ENDPOINT}/${s3Key}`;
+
   } catch (err) {
     if (err.name === 'NotFound') {
-      const screenShortBuffer = await captureWebsite.buffer(formatUrl(url), {
+      const screenShotBuffer = await captureWebsite.buffer(formatUrl(url), {
         launchOptions: {
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox'
           ]
         },
-
-        type: 'webp',
-        width: 460,
-        height: 288,
-        quality: 0.3,
+        type: 'png',
+        width: 1920,
+        height: 1080,
+        
       });
+
+      // Resize the PNG image
+      const resizedPngBuffer = await sharp(screenShotBuffer)
+        .resize(460, 288, { fit: 'cover' })
+        .png()
+        .toBuffer();
+
+      // Convert the resized PNG to WebP with compression
+      const webpBuffer = await sharp(resizedPngBuffer)
+        .webp({ quality: 80, effort: 6 })
+        .toBuffer();
+
       // Upload to S3
       await S3.send(new PutObjectCommand({
         Bucket: process.env.BUCKET_NAME,
         Key: s3Key,
-        Body: screenShortBuffer,
+        Body: webpBuffer,
         ContentType: 'image/webp',
       }));
 
@@ -128,6 +145,7 @@ export const getImageUrl = async (url, latest = false) => {
     throw err;
   }
 };
+
 
 export const getMetaData = async (url) => {
   const metaInformation = await extractMetadata(url);

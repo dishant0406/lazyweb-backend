@@ -1,15 +1,16 @@
-import express from 'express';
+import apicache from 'apicache-plus';
 import cors from "cors";
 import dotenv from 'dotenv';
-import { githubRoute, loginRoute, websitesRoute, snippetRoute } from './routes/index.js'
-import { connectDB } from './utils/db.js';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import express from 'express';
 import http from 'http';
-import path from 'path';
-import apicache from 'apicache-plus';
-import { initializeSocket } from './socket/index.js';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { isAuthenticated } from './middleware/auth/protected.js';
 import { logger } from './middleware/logger/logger.js';
+import { githubRoute, loginRoute, snippetRoute, websitesRoute } from './routes/index.js';
+import { initializeSocket } from './socket/index.js';
+import { connectDB } from './utils/db.js';
 import { getImageUrl, getMetaData } from './utils/webData.js';
 
 dotenv.config();
@@ -26,17 +27,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 app.use(express.static('screenshots'));
 const screenshotPath = path.join(__dirname, 'screenshots');
 
-// const allowedOrigins = ['http://localhost:3000', 'https://lazyweb.rocks', 'https://app.lazyweb.rocks'];
-
-// const corsOptions = {
-//   origin: function (origin, callback) {
-//     if (allowedOrigins.indexOf(origin) !== -1) {
-//       callback(null, true)
-//     } else {
-//       callback(new Error('Not allowed by CORS'))
-//     }
-//   }
-// };
 
 // Set up middleware
 const corsOptions = {
@@ -44,6 +34,8 @@ const corsOptions = {
   allowedHeaders: '*',
   credentials: true,
 };
+
+
 
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -57,6 +49,26 @@ app.use('/oauth', githubRoute);
 
 app.use('/api/websites', websitesRoute);
 app.use('/api/snippets', snippetRoute);
+
+app.use("/redirects", isAuthenticated)
+
+app.use('/redirects', createProxyMiddleware({
+  target: 'https://redirects.lazyweb.rocks',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/redirects': '/' // Remove '/redirects' from the beginning of the path
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(req.user);
+    if (req.user) {
+      proxyReq.setHeader('X-User-Id', req.user.id);
+      proxyReq.setHeader('X-User-Email', req.user.email);
+    }
+  },
+  onProxyRes: (proxyRes, req, res) => {
+    proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+  }
+}));
 
 app.post('/metadata', async (req, res) => {
   try {
@@ -85,7 +97,7 @@ app.get('/', (req, res) => {
     success: true,
     status: 200,
     data: {
-      version: '1.0.0',
+      version: '1.1.0',
       author: 'Dishant Sharma',
       github: 'https://github.com/dishant0406',
       website: 'https://dishantsharma.dev',
@@ -93,7 +105,7 @@ app.get('/', (req, res) => {
   });
 })
 
-let port = process.env.PORT || 3000
+let port = process.env.PORT || 4000
 server.listen({ port }, () =>
   console.log(`🚀 Server ready at http://localhost:${port}`)
 );

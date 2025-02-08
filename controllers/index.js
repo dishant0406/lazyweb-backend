@@ -1,40 +1,70 @@
-import { isAuthenticated, getUserDetails } from './auth/isAuthenticated.js'
-import { login, verifyToken, loginExt } from './auth/login.js'
-import { github, githubOAuth } from './auth/githubauth.js'
-import { showAllWebsites, refetchImageAndUpdateResource, refetchMetaAndUpdateResource, addWebsiteOnlyByURL, getUserWebsitesNotPublic, bulkBookmarkResources, getUserBookmarkedResources, generateUI, deleteAllResources, setResourceAvailableForApproval, getResourcesThatMatchDescription, rejectResource, addWebsite, getUserWebsites, updateResource, getResourcesByCategories, getResourcesByTags, bookmarkResource, getResourcesBookmarkedByUser, setPublicAvailability, showIsAvailableForApproval, getAllCategories, getAllTags, likeAResource } from './website/websiteSearch.js';
 import { decodedToken } from './auth/decodedToken.js';
-
-export {
-  isAuthenticated,
-  login,
-  addWebsiteOnlyByURL,
-  getUserWebsitesNotPublic,
-  loginExt,
-  github,
-  githubOAuth,
-  showAllWebsites,
+import { github, githubOAuth } from './auth/githubauth.js';
+import { getUserDetails, isAuthenticated } from './auth/isAuthenticated.js';
+import { login, loginExt, verifyToken } from './auth/login.js';
+import {
   addWebsite,
-  getUserWebsites,
-  updateResource,
-  getResourcesByCategories,
-  getResourcesByTags,
+  addWebsiteOnlyByURL,
   bookmarkResource,
-  getResourcesBookmarkedByUser,
-  getUserBookmarkedResources,
-  setPublicAvailability,
-  showIsAvailableForApproval,
-  decodedToken,
-  getAllCategories,
-  getAllTags,
-  likeAResource,
-  getUserDetails,
-  rejectResource,
-  setResourceAvailableForApproval,
-  getResourcesThatMatchDescription,
+  bulkBookmarkResources,
   deleteAllResources,
   generateUI,
-  bulkBookmarkResources,
-  verifyToken,
+  getAllCategories,
+  getAllTags,
+  getResourcesBookmarkedByUser,
+  getResourcesByCategories,
+  getResourcesByTags,
+  getResourcesThatMatchDescription,
+  getUserBookmarkedResources,
+  getUserWebsites,
+  getUserWebsitesNotPublic,
+  likeAResource,
   refetchImageAndUpdateResource,
-  refetchMetaAndUpdateResource
-}
+  refetchMetaAndUpdateResource,
+  rejectResource,
+  setPublicAvailability,
+  setResourceAvailableForApproval,
+  showAllWebsites,
+  showIsAvailableForApproval,
+  updateResource,
+  getAllTagsAndCategories,
+  getPaginatedResources
+} from './website/websiteSearch.js';
+
+export {
+  addWebsite,
+  addWebsiteOnlyByURL,
+  bookmarkResource,
+  bulkBookmarkResources,
+  decodedToken,
+  deleteAllResources,
+  generateUI,
+  getAllCategories,
+  getAllTags,
+  getResourcesBookmarkedByUser,
+  getResourcesByCategories,
+  getResourcesByTags,
+  getResourcesThatMatchDescription,
+  getUserBookmarkedResources,
+  getUserDetails,
+  getUserWebsites,
+  getUserWebsitesNotPublic,
+  github,
+  githubOAuth,
+  isAuthenticated,
+  likeAResource,
+  login,
+  loginExt,
+  refetchImageAndUpdateResource,
+  refetchMetaAndUpdateResource,
+  rejectResource,
+  setPublicAvailability,
+  setResourceAvailableForApproval,
+  showAllWebsites,
+  showIsAvailableForApproval,
+  updateResource,
+  verifyToken,
+  getAllTagsAndCategories,
+  getPaginatedResources
+};
+
