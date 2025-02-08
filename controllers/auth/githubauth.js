@@ -1,8 +1,8 @@
+import axios from 'axios';
 import dotenv from 'dotenv';
+import { User } from '../../Model/User.js';
+import { makeToken } from './login.js';
 dotenv.config();
-import axios from 'axios'
-import { makeToken } from './login.js'
-import { User } from '../../Model/User.js'
 
 
 /**
@@ -21,10 +21,10 @@ const github = async (req, res) => {
     // configure request params
     const options = {
       method: 'POST',
-      url: process.env.GITHUB_URL,
+      url: process.env.GH_URL,
       data: {
-        client_id: process.env.GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        client_id: process.env.GH_CLIENT_ID,
+        client_secret: process.env.GH_CLIENT_SECRET,
         code,
         scope: 'user:email'
       },
@@ -39,7 +39,7 @@ const github = async (req, res) => {
 
     const options_email = {
       method: 'GET',
-      url: process.env.GITHUB_API_URL,
+      url: process.env.GH_API_URL,
       headers: {
         accept: 'application/json',
         'User-Agent': 'custom',
@@ -86,10 +86,10 @@ const github = async (req, res) => {
  * @throws - An error if the request fails.
  */
 const githubOAuth = (req, res) => {
-  return res.redirect(`${process.env.GITHUB_AUTH_URL}${process.env.GITHUB_CLIENT_ID}&scope=user:email`);
+  return res.redirect(`${process.env.GH_AUTH_URL}${process.env.GH_CLIENT_ID}&scope=user:email`);
 }
 
 export {
-  github,
-  githubOAuth
-}
+    github,
+    githubOAuth
+};
