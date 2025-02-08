@@ -40,29 +40,29 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Prepare secret references
+      - name: Prepare environment variables
         run: |
-          SECRETS="BACKEND_URL=secretref:backend-url"
-          SECRETS="$SECRETS BUCKET_NAME=secretref:bucket-name"
-          SECRETS="$SECRETS EMAIL_PASSWORD=secretref:email-password"
-          SECRETS="$SECRETS EMAIL_SERVICE=secretref:email-service"
-          SECRETS="$SECRETS EMAIL_USER=secretref:email-user"
-          SECRETS="$SECRETS ENDPOINT=secretref:endpoint"
-          SECRETS="$SECRETS FRONTEND_URL=secretref:frontend-url"
-          SECRETS="$SECRETS GITHUB_API_URL=secretref:github-api-url"
-          SECRETS="$SECRETS GITHUB_AUTH_URL=secretref:github-auth-url"
-          SECRETS="$SECRETS GITHUB_CLIENT_ID=secretref:github-client-id"
-          SECRETS="$SECRETS GITHUB_CLIENT_SECRET=secretref:github-client-secret"
-          SECRETS="$SECRETS GITHUB_URL=secretref:github-url"
-          SECRETS="$SECRETS JWT_SECRET_KEY=secretref:jwt-secret-key"
-          SECRETS="$SECRETS MONGO_URI=secretref:mongo-uri"
-          SECRETS="$SECRETS OPENAI_API_KEY=secretref:openai-api-key"
-          SECRETS="$SECRETS PUBLIC_ENDPOINT=secretref:public-endpoint"
-          SECRETS="$SECRETS R2_ACCESS_KEY_ID=secretref:r2-access-key-id"
-          SECRETS="$SECRETS R2_SECRET_ACCESS_KEY=secretref:r2-secret-access-key"
-          SECRETS="$SECRETS SES_ACCESS_KEY=secretref:ses-access-key"
-          SECRETS="$SECRETS SES_SCERET_KEY=secretref:ses-secret-key"
-          echo "APP_SECRETS=$SECRETS" >> $GITHUB_ENV
+          ENVVARS="BACKEND_URL=secretref:backend-url"
+          ENVVARS="$ENVVARS,BUCKET_NAME=secretref:bucket-name"
+          ENVVARS="$ENVVARS,EMAIL_PASSWORD=secretref:email-password"
+          ENVVARS="$ENVVARS,EMAIL_SERVICE=secretref:email-service"
+          ENVVARS="$ENVVARS,EMAIL_USER=secretref:email-user"
+          ENVVARS="$ENVVARS,ENDPOINT=secretref:endpoint"
+          ENVVARS="$ENVVARS,FRONTEND_URL=secretref:frontend-url"
+          ENVVARS="$ENVVARS,GITHUB_API_URL=secretref:github-api-url"
+          ENVVARS="$ENVVARS,GITHUB_AUTH_URL=secretref:github-auth-url"
+          ENVVARS="$ENVVARS,GITHUB_CLIENT_ID=secretref:github-client-id"
+          ENVVARS="$ENVVARS,GITHUB_CLIENT_SECRET=secretref:github-client-secret"
+          ENVVARS="$ENVVARS,GITHUB_URL=secretref:github-url"
+          ENVVARS="$ENVVARS,JWT_SECRET_KEY=secretref:jwt-secret-key"
+          ENVVARS="$ENVVARS,MONGO_URI=secretref:mongo-uri"
+          ENVVARS="$ENVVARS,OPENAI_API_KEY=secretref:openai-api-key"
+          ENVVARS="$ENVVARS,PUBLIC_ENDPOINT=secretref:public-endpoint"
+          ENVVARS="$ENVVARS,R2_ACCESS_KEY_ID=secretref:r2-access-key-id"
+          ENVVARS="$ENVVARS,R2_SECRET_ACCESS_KEY=secretref:r2-secret-access-key"
+          ENVVARS="$ENVVARS,SES_ACCESS_KEY=secretref:ses-access-key"
+          ENVVARS="$ENVVARS,SES_SCERET_KEY=secretref:ses-secret-key"
+          echo "APP_ENVVARS=$ENVVARS" >> $GITHUB_ENV
 
       - name: Check if Container App exists and create if not
         run: |
@@ -70,7 +70,6 @@ jobs:
             echo "Container App already exists. Will update in next step."
           else
             echo "Container App does not exist. Creating..."
-            SECRET_REFS=$(echo ${{ env.APP_SECRETS }} | tr ' ' '\n' | sed 's/^/--env-vars /' | tr '\n' ' ')
             az containerapp create \
               --name ${{ env.IMAGE_NAME }} \
               --resource-group ${{ secrets.RESOURCE_GROUP }} \
@@ -83,14 +82,13 @@ jobs:
               --ingress external \
               --cpu 2.5 \
               --memory 5Gi \
-              $SECRET_REFS
+              --env-vars ${{ env.APP_ENVVARS }}
           fi
       
       - name: Update Azure Container App
         run: |
-          SECRET_REFS=$(echo ${{ env.APP_SECRETS }} | tr ' ' '\n' | sed 's/^/--set-env-vars /' | tr '\n' ' ')
           az containerapp update \
             --name ${{ env.IMAGE_NAME }} \
             --resource-group ${{ secrets.RESOURCE_GROUP }} \
             --image ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            $SECRET_REFS
+            --set-env-vars ${{ env.APP_ENVVARS }}
