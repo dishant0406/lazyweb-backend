@@ -35,14 +35,11 @@ jobs:
         uses: azure/container-apps-deploy-action@v2
         with:
           appSourcePath: ${{ github.workspace }}
-          _dockerfilePathKey_: Dockerfile
+          dockerfilePath: Dockerfile
           registryUrl: tiffinspace.azurecr.io
           registryUsername: ${{ secrets.LAZYWEBBACKEND_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.LAZYWEBBACKEND_REGISTRY_PASSWORD }}
           containerAppName: lazyweb-backend
           resourceGroup: TiffinSpace
-          imageToBuild: default/[parameters('containerAppName')]:${{ github.sha }}
-          _buildArgumentsKey_: |
-            _buildArgumentsValues_
-
+          imageToBuild: default/lazyweb-backend:${{ github.sha }}
 
