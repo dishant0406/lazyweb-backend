@@ -26,6 +26,7 @@
   "scripts": {
     "dev": "",
     "test": "",
+    "start": "node server.js",
     "doc": "jsdoc2md ./controllers/**/*.js > README.md"
   },
   "dependencies": {
