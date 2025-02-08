@@ -40,12 +40,37 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
+      - name: Prepare secret references
+        run: |
+          SECRETS="BACKEND_URL=secretref:backend-url"
+          SECRETS="$SECRETS BUCKET_NAME=secretref:bucket-name"
+          SECRETS="$SECRETS EMAIL_PASSWORD=secretref:email-password"
+          SECRETS="$SECRETS EMAIL_SERVICE=secretref:email-service"
+          SECRETS="$SECRETS EMAIL_USER=secretref:email-user"
+          SECRETS="$SECRETS ENDPOINT=secretref:endpoint"
+          SECRETS="$SECRETS FRONTEND_URL=secretref:frontend-url"
+          SECRETS="$SECRETS GITHUB_API_URL=secretref:github-api-url"
+          SECRETS="$SECRETS GITHUB_AUTH_URL=secretref:github-auth-url"
+          SECRETS="$SECRETS GITHUB_CLIENT_ID=secretref:github-client-id"
+          SECRETS="$SECRETS GITHUB_CLIENT_SECRET=secretref:github-client-secret"
+          SECRETS="$SECRETS GITHUB_URL=secretref:github-url"
+          SECRETS="$SECRETS JWT_SECRET_KEY=secretref:jwt-secret-key"
+          SECRETS="$SECRETS MONGO_URI=secretref:mongo-uri"
+          SECRETS="$SECRETS OPENAI_API_KEY=secretref:openai-api-key"
+          SECRETS="$SECRETS PUBLIC_ENDPOINT=secretref:public-endpoint"
+          SECRETS="$SECRETS R2_ACCESS_KEY_ID=secretref:r2-access-key-id"
+          SECRETS="$SECRETS R2_SECRET_ACCESS_KEY=secretref:r2-secret-access-key"
+          SECRETS="$SECRETS SES_ACCESS_KEY=secretref:ses-access-key"
+          SECRETS="$SECRETS SES_SCERET_KEY=secretref:ses-secret-key"
+          echo "APP_SECRETS=$SECRETS" >> $GITHUB_ENV
+
       - name: Check if Container App exists and create if not
         run: |
           if az containerapp show --name ${{ env.IMAGE_NAME }} --resource-group ${{ secrets.RESOURCE_GROUP }} --query properties.provisioningState -o tsv &>/dev/null; then
             echo "Container App already exists. Will update in next step."
           else
             echo "Container App does not exist. Creating..."
+            SECRET_REFS=$(echo ${{ env.APP_SECRETS }} | tr ' ' '\n' | sed 's/^/--env-vars /' | tr '\n' ' ')
             az containerapp create \
               --name ${{ env.IMAGE_NAME }} \
               --resource-group ${{ secrets.RESOURCE_GROUP }} \
@@ -57,12 +82,15 @@ jobs:
               --target-port 4000 \
               --ingress external \
               --cpu 2.5 \
-              --memory 5Gi
+              --memory 5Gi \
+              $SECRET_REFS
           fi
       
       - name: Update Azure Container App
         run: |
+          SECRET_REFS=$(echo ${{ env.APP_SECRETS }} | tr ' ' '\n' | sed 's/^/--set-env-vars /' | tr '\n' ' ')
           az containerapp update \
             --name ${{ env.IMAGE_NAME }} \
             --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --image ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            --image ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            $SECRET_REFS
