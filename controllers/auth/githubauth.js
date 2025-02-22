@@ -4,32 +4,20 @@ import { User } from '../../Model/User.js';
 import { makeToken } from './login.js';
 dotenv.config();
 
+
 /**
  * This is a JavaScript function that handles a GitHub authentication request and returns a JWT token
  * and user email to the frontend.
- * @param {Object} req - The request object containing the authorization code and state.
- * @param {Object} res - The response object.
- * @returns {Object} - The script that sends the user email and JWT token to the frontend.
- * @throws {Error} - An error if the request fails or validation fails.
+ * @param - The query containing the authorization code.
+ * @returns - The script that sends the user email and JWT token to the frontend.
+ * @throws - An error if the request fails.
  */
 const github = async (req, res) => {
   try {
-    // Extract authorize code and state
-    const { code, state, redirect_uri } = req.query;
+    // extract authorize code 
+    const code = req.query.code;
 
-    // Validate required parameters
-    if (!code || !state || !redirect_uri) {
-      throw new Error('Missing required parameters');
-    }
-
-    // Validate redirect_uri against allowed origins
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [process.env.FRONTEND_URL];
-    const redirectUrl = new URL(redirect_uri);
-    if (!allowedOrigins.includes(redirectUrl.origin)) {
-      throw new Error('Invalid redirect_uri');
-    }
-
-    // Configure request params for access token
+    // configure request params
     const options = {
       method: 'POST',
       url: process.env.GH_URL,
@@ -37,8 +25,6 @@ const github = async (req, res) => {
         client_id: process.env.GH_CLIENT_ID,
         client_secret: process.env.GH_CLIENT_SECRET,
         code,
-        redirect_uri,
-        state,
         scope: 'user:email'
       },
       headers: {
@@ -46,14 +32,12 @@ const github = async (req, res) => {
       }
     };
 
-    // Request access token
+    // make a request for auth_token using above options
     const response = await axios(options);
 
-    if (response.data.error) {
-      throw new Error(response.data.error_description || response.data.error);
-    }
+    console.log("GITHUB RESPONSE", response.data);
 
-    // Configure request for email
+
     const options_email = {
       method: 'GET',
       url: process.env.GH_API_URL,
@@ -64,88 +48,50 @@ const github = async (req, res) => {
       }
     };
 
-    // Get user's email
     const emailResponse = await axios(options_email);
     const email = emailResponse.data.find(e => e.primary)?.email;
 
-    if (!email) {
-      throw new Error('No primary email found');
-    }
-
-    // Find or create user
+    //findOne using User model by email if there is nothing then add the User
     const user = await User.findOne({ email: email });
-    let userId;
-
     if (!user) {
       const newUser = new User({
         email: email,
         isAdmin: false
       });
-      const savedUser = await newUser.save();
-      userId = savedUser._id;
-    } else {
-      userId = user._id;
+      await newUser.save();
     }
 
-    // Generate token
-    const token = makeToken(email, user?.isAdmin, userId);
 
-    // Return response script with state parameter for validation
+
+    // make a token
+    const token = makeToken(email, user?.isAdmin, user._id);
     return res.send(`
-      <script>
-        window.opener.postMessage({
-          user: ${JSON.stringify(email)},
-          jwt: '${token}',
-          state: '${state}'
-        }, '${redirectUrl.origin}');
-        window.close();
-      </script>
-    `);
+    <script>
+      window.opener.postMessage({
+        user: ${JSON.stringify(email)},
+        jwt: '${token}'
+      }, '${process.env.FRONTEND_URL}');
+    </script>
+  `);
   } catch (error) {
-    console.error('GitHub OAuth Error:', error);
-    // Return error script
-    return res.send(`
-      <script>
-        window.opener.postMessage({
-          error: '${error.message}'
-        }, '${req.query.redirect_uri || process.env.FRONTEND_URL}');
-        window.close();
-      </script>
-    `);
+    console.error(error);
+    return res.json(error);
   }
 };
+
 
 /**
- * This function redirects the user to the GitHub OAuth authorization URL with the specified parameters.
- * @param {Object} req - The request object containing the redirect_uri.
- * @param {Object} res - The response object.
- * @returns {Object} - The GitHub OAuth authorization URL redirect.
- * @throws {Error} - An error if the request fails.
+ * This function redirects the user to the GitHub OAuth authorization URL with the specified client ID
+ * and email scope.
+ * @returns - The GitHub OAuth authorization URL.
+ * @throws - An error if the request fails.
  */
 const githubOAuth = (req, res) => {
-  const { redirect_uri, state } = req.query;
-
-  if (!redirect_uri || !state) {
-    return res.status(400).json({ error: 'Missing required parameters' });
-  }
-
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [process.env.FRONTEND_URL];
-  const redirectUrl = new URL(redirect_uri);
-  
-  if (!allowedOrigins.includes(redirectUrl.origin)) {
-    return res.status(400).json({ error: 'Invalid redirect_uri' });
-  }
-
-  const authUrl = new URL(process.env.GH_AUTH_URL);
-  authUrl.searchParams.append('client_id', process.env.GH_CLIENT_ID);
-  authUrl.searchParams.append('scope', 'user:email');
-  authUrl.searchParams.append('redirect_uri', redirect_uri);
-  authUrl.searchParams.append('state', state);
-
-  return res.redirect(authUrl.toString());
-};
+  return res.redirect(`${process.env.GH_AUTH_URL}=${process.env.GH_CLIENT_ID}&scope=user:email`);
+}
 
 export {
   github,
   githubOAuth
 };
+
