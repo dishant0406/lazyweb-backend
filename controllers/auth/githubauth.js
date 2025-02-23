@@ -132,7 +132,7 @@ const githubOAuth = (req, res) => {
   let { redirect_uri, state } = req.query;
 
   if(!redirect_uri) {
-    redirect_uri = process.env.FRONTEND_URL;
+    redirect_uri = process.env.BACKEND_URL + "/oauth/redirect/" +  encodeURIComponent(btoa(window.location.href));
   }
 
   if(!state) {
