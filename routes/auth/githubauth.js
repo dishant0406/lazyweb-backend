@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { githubOAuth, github } from '../../controllers/index.js';
+import { github, githubOAuth } from '../../controllers/index.js';
 const router = Router();
 
 router.get('/redirect', github)
+
+router.get('/redirect/:id', github)
 
 router.get('/github', githubOAuth)
 
