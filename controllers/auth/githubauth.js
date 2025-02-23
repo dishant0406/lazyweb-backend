@@ -132,7 +132,7 @@ const githubOAuth = (req, res) => {
   let { redirect_uri, state } = req.query;
 
   if(!redirect_uri) {
-    redirect_uri = `${process.env.GH_AUTH_URL}=${process.env.GH_CLIENT_ID}&scope=user:email`
+    redirect_uri = process.env.FRONTEND_URL;
   }
 
   if(!state) {
