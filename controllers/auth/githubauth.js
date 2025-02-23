@@ -145,6 +145,8 @@ const githubOAuth = (req, res) => {
     return res.status(400).json({ error: 'Missing required parameters' });
   }
 
+  console.log("Redirect URI: ", redirect_uri);
+
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [process.env.FRONTEND_URL];
   const redirectUrl = new URL(redirect_uri);
   
@@ -157,6 +159,8 @@ const githubOAuth = (req, res) => {
   authUrl.searchParams.append('scope', 'user:email');
   authUrl.searchParams.append('redirect_uri', redirect_uri);
   authUrl.searchParams.append('state', state);
+
+  console.log("Auth URL: ", authUrl.toString());
 
   return res.redirect(authUrl.toString());
 };
