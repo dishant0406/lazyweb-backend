@@ -56,22 +56,19 @@ app.use('/redirects', createProxyMiddleware({
   target: 'https://redirects.lazyweb.rocks',
   changeOrigin: true,
   pathRewrite: {
-    '^/redirects': '/' // Remove '/redirects' from the beginning of the path
+    '^/redirects': '/' // Remove '/redirects' from the beginning of the path,
   },
   onProxyReq: (proxyReq, req, res) => {
-    delete proxyReq.headers['content-length'];
-    delete proxyReq.headers['Content-Length'];
     if (req.user) {
       proxyReq.setHeader('X-User-Id', req.user.id);
       proxyReq.setHeader('X-User-Email', req.user.email);
     }
   },
   onProxyRes: (proxyRes, req, res) => {
-    // Delete the content-length header
+    proxyRes.headers['Access-Control-Allow-Origin'] = '*';
     delete proxyRes.headers['content-length'];
     delete proxyRes.headers['Content-Length'];
-    proxyRes.headers['Access-Control-Allow-Origin'] = '*';
-  }
+  },
 }));
 
 app.post('/metadata', async (req, res) => {
