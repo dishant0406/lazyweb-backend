@@ -2,8 +2,8 @@ import apicache from 'apicache-plus';
 import cors from "cors";
 import dotenv from 'dotenv';
 import express from 'express';
+import proxy from 'express-http-proxy';
 import http from 'http';
-import { createProxyMiddleware } from 'http-proxy-middleware';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { isAuthenticated } from './middleware/auth/protected.js';
@@ -52,24 +52,38 @@ app.use('/api/snippets', snippetRoute);
 
 app.use("/redirects", isAuthenticated)
 
-app.use('/redirects', createProxyMiddleware({
-  target: 'https://redirects.lazyweb.rocks',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/redirects': '/' // Remove '/redirects' from the beginning of the path,
+app.use('/redirects', proxy('https://redirects.lazyweb.rocks', {
+  proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
+    if (srcReq.user) {
+      proxyReqOpts.headers['X-User-Id'] = srcReq.user.id;
+      proxyReqOpts.headers['X-User-Email'] = srcReq.user.email;
+    }
+    return proxyReqOpts;
   },
-  onProxyReq: (proxyReq, req, res) => {
-    if (req.user) {
-      proxyReq.setHeader('X-User-Id', req.user.id);
-      proxyReq.setHeader('X-User-Email', req.user.email);
+  proxyReqPathResolver: (req) => {
+    return req.url.replace(/^\/redirects/, '/');
+  },
+  userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+    let data = proxyResData.toString('utf-8');
+    try {
+      let output = JSON.parse(data);
+      // Modify the output as needed
+      return JSON.stringify(output);
+    } catch (err) {
+      return data;
     }
   },
-  onProxyRes: (proxyRes, req, res) => {
-    proxyRes.headers['Access-Control-Allow-Origin'] = '*';
-    delete proxyRes.headers['content-length'];
-    delete proxyRes.headers['Content-Length'];
+  userResHeaderDecorator: (headers, userReq, userRes, proxyReq, proxyRes) => {
+    headers['Access-Control-Allow-Origin'] = '*';
+    return headers;
   },
+  proxyReqBodyDecorator: (bodyContent, srcReq) => {
+    console.log(bodyContent);
+    return bodyContent;
+  }
+  
 }));
+  
 
 app.post('/metadata', async (req, res) => {
   try {
