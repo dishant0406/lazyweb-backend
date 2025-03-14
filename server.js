@@ -78,7 +78,6 @@ app.use('/redirects', proxy('https://redirects.lazyweb.rocks', {
     return headers;
   },
   proxyReqBodyDecorator: (bodyContent, srcReq) => {
-    console.log(bodyContent);
     return bodyContent;
   }
   
