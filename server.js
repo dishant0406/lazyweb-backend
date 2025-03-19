@@ -30,7 +30,7 @@ const screenshotPath = path.join(__dirname, 'screenshots');
 
 // Set up middleware
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://lazyweb.rocks', 'https://app.lazyweb.rocks'],
+  origin: ['http://localhost:3000', 'https://lazyweb.rocks', 'https://app.lazyweb.rocks','https://redirect.lazyweb.rocks'],
   allowedHeaders: '*',
   credentials: true,
 };
@@ -79,7 +79,8 @@ app.use('/redirects', proxy('https://redirects.lazyweb.rocks', {
   },
   proxyReqBodyDecorator: (bodyContent, srcReq) => {
     return bodyContent;
-  }
+  },
+  timeout:60000
   
 }));
   
