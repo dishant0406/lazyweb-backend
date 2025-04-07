@@ -30,7 +30,7 @@ const screenshotPath = path.join(__dirname, 'screenshots');
 
 // Set up middleware
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://lazyweb.rocks', 'https://app.lazyweb.rocks','https://redirect.lazyweb.rocks'],
+  origin: ['http://localhost:3000', 'https://lazyweb.rocks', 'https://app.lazyweb.rocks','https://redirect.lazyweb.rocks', 'https://quickleap.io'],
   allowedHeaders: '*',
   credentials: true,
 };
