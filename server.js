@@ -52,7 +52,7 @@ app.use('/api/snippets', snippetRoute);
 
 app.use("/redirects", isAuthenticated)
 
-app.use('/redirects', proxy('https://redirects.quickleap.io', {
+app.use('/redirects', proxy('https://redirect.quickleap.io', {
   proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
     if (srcReq.user) {
       proxyReqOpts.headers['X-User-Id'] = srcReq.user.id;
