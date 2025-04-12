@@ -30,7 +30,7 @@ const screenshotPath = path.join(__dirname, 'screenshots');
 
 // Set up middleware
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://lazyweb.rocks', 'https://app.lazyweb.rocks','https://redirect.lazyweb.rocks', 'https://quickleap.io'],
+  origin: ['http://localhost:3000', 'https://lazyweb.rocks', 'https://app.lazyweb.rocks','https://redirect.lazyweb.rocks', 'https://quickleap.io', 'https://redirect.quickleap.io'],
   allowedHeaders: '*',
   credentials: true,
 };
@@ -52,7 +52,7 @@ app.use('/api/snippets', snippetRoute);
 
 app.use("/redirects", isAuthenticated)
 
-app.use('/redirects', proxy('https://redirects.lazyweb.rocks', {
+app.use('/redirects', proxy('https://redirects.quickleap.io', {
   proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
     if (srcReq.user) {
       proxyReqOpts.headers['X-User-Id'] = srcReq.user.id;
